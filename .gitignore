@@ -4,3 +4,8 @@
 # Node
 node_modules/
 package-lock.json
+
+# python
+__pycache__/
+*.pyc
+venv/
