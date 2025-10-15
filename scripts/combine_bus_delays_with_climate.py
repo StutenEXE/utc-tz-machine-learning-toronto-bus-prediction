@@ -1,8 +1,8 @@
 import os
 import pandas as pd
 
-CLIMATE_FILE = "./data/climate-hourly-2023.csv"
-BUS_DELAYS_FILE = "./data/ttc-bus-delay-data-2023.csv"
+CLIMATE_FILE = "./data/climate/climate-hourly-2023.csv"
+BUS_DELAYS_FILE = "./data/bus-delay/ttc-bus-delay-data-2023.csv"
 OUTPUT_FILE = "./data/raw_dataset.csv"
 
 def convert_bus_datetime_to_climate_date(date, time):

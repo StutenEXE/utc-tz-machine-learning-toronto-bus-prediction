@@ -6,7 +6,7 @@ import pandas as pd
 YEARS = [2023]
 
 # Path to files
-PATH = "./data/"
+PATH = "./data/climate/"
 
 # List of files to merge
 FILES_TO_MERGE = ["climate-hourly-p1.csv", "climate-hourly-p2.csv"]

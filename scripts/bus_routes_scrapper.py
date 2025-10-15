@@ -10,9 +10,9 @@ COLORS_LOOKUP = {
 }
 
 # Found by analyzing network requests on https://www.ttc.ca/routes-and-schedules/listroutes/bus
-BUS_ROUTES_JSON = "./data/ttc-bus-routes-and-schedules.json"
+BUS_ROUTES_JSON = "./data/bus-routes/ttc-bus-routes-and-schedules.json"
 
-OUTPUT_FILE = "./data/bus-routes-2023.csv"
+OUTPUT_FILE = "./data/bus-routes/bus-routes-2023.csv"
 
 def request_bus_routes():
     with open(BUS_ROUTES_JSON, 'r') as f:
