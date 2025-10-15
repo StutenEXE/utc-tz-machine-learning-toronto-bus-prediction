@@ -37,7 +37,7 @@ def combine_and_save():
         df_year = combine_files_by_year(year)
         df_combined = pd.concat([df_combined, df_year], ignore_index=True)
 
-    output_file = os.path.join(PATH, f"climate_hourly_{'-'.join(map(str, YEARS))}.csv")
+    output_file = os.path.join(PATH, f"climate-hourly-{'-'.join(map(str, YEARS))}.csv")
     df_combined.to_csv(output_file, index=False)
     print(f"Combined data for years {'-'.join(map(str, YEARS))} saved to {output_file}")
 
