@@ -67,6 +67,6 @@ export function BusLine({ map, coordinates, color, id, name }: BusLineProps) {
     }, [map, coordinates, color, id, name]);
 
     return ( lineReady &&
-        <BusStop position={coordinates[2]} color={color} name={'arret 1'} map={map}/>
+        <BusStop position={coordinates[8]} color={color} name={'arret 1'} map={map}/>
     );
 }

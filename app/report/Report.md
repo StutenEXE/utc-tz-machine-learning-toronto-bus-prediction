@@ -34,3 +34,18 @@ Elle a été discutée et validée avec Alexandre Bidaux avant de commencer le d
 On peut ainsi générer à partir de ce schema notre API RESTful avec les routes suivantes :
 
 https://editor.swagger.io/?url=https://gitlab.utc.fr/clmartin/pr_subway_martins_bidaux/-/blob/app/app/report/APIREST.yaml?ref_type=heads
+
+## Proof of Concept
+Avant de s’engager dans la mise en œuvre complète du système, un Proof of Concept (PoC) a été réalisé afin de vérifier la cohérence des choix techniques et la faisabilité des fonctionnalités clés. L’objectif n’était pas de proposer une version exhaustive de l’application, mais de valider étape par étape les principaux éléments qui constituent son cœur fonctionnel.
+
+Le PoC a tout d'abord permis de tester l’intégration d’une carte interactive basée sur __Mapbox GL JS__, affichée au sein d’une application front-end développée avec __React__. Nous avons vérifié la possibilité de représenter dynamiquement des lignes de bus sous forme de tracés géographiques, ainsi que d’ajouter des points d’intérêt tels que les arrêts. Ce premier jalon a servi à confirmer la compatibilité entre les données de coordonnées, la logique de rendu en temps réel et les contraintes de performance liées au navigateur.
+
+De plus Mapbox GL offre une grande flexibilité en termes de personnalisation visuelle, ce qui a permis d’adapter l’apparence de la carte aux besoins spécifiques du projet, notamment en termes de styles et de couches d’information supplémentaires.
+Il est aussi possible d’intégrer __des effets visuels avancés__ (pluie et neige) sur la carte et d'y inclure __Three.js__ pour peut-être à terme inclure une visualisation en temps réel des bus en 3D.
+
+La carte personnalisée est accessible ici : https://api.mapbox.com/styles/v1/clementmartins/cmh0o7rch000e01s7g2psbnz8.html?title=view&access_token=pk.eyJ1IjoiY2xlbWVudG1hcnRpbnMiLCJhIjoiY21oMGx4cHAxMDI4bDJuczhnb2N0NHd2ZSJ9.vzFXf89w1P83cru30twuAA&zoomwheel=true&fresh=true#0/0/0
+Elle à été faite de façon à faire ressortir les routes et donc mettre en avant les lignes de bus.
+
+Parallèlement, une première couche de back-end a été mise en place à l’aide de Node.js et Express, structurée de manière à évoluer vers une architecture en microservices. Une attention particulière a été portée à l’isolation des clés d’API et des paramètres sensibles via un fichier __.env__, afin de garantir une configuration modulaire et sécurisée.
+
+![](./images\PoC.png)
