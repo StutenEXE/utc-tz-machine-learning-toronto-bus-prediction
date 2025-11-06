@@ -1,5 +1,5 @@
 import './App.css'
-import MapToronto from './component/map'
+import MapToronto from './component/map';
 
 function App() {
   return (

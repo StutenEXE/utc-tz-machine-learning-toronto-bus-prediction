@@ -1,6 +1,9 @@
 {
   "dependencies": {
+    "@types/mapbox-gl": "^3.4.1",
     "leaflet": "^1.9.4",
-    "react-leaflet": "^5.0.0"
+    "mapbox-gl": "^3.15.0",
+    "react-leaflet": "^5.0.0",
+    "react-map-gl": "^8.1.0"
   }
 }

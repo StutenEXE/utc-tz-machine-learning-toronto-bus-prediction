@@ -1,37 +1,72 @@
-import { MapContainer } from 'react-leaflet/MapContainer'
-import { TileLayer } from 'react-leaflet/TileLayer'
-import { Marker } from 'react-leaflet/Marker'
-import { BusLine } from './BusLine'
-import { Popup } from 'react-leaflet/Popup'
-import 'leaflet/dist/leaflet.css';
+import React from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
-import type {LatLngExpression} from "leaflet";
+mapboxgl.accessToken =
+    'pk.eyJ1IjoiY2xlbWVudG1hcnRpbnMiLCJhIjoiY21oMGx4cHAxMDI4bDJuczhnb2N0NHd2ZSJ9.vzFXf89w1P83cru30twuAA';
 
-export default function MapToronto() {
-    // Toronto coordinates
-    const torontoPosition: LatLngExpression = [43.6532, -79.3832]; // [latitude, longitude]
+export default class MapToronto extends React.Component {
+    private readonly mapRef: React.RefObject<HTMLDivElement> = React.createRef();
+    private map: mapboxgl.Map | null = null;
 
-    const busLineCoordinates: LatLngExpression[] = [
-        [43.6532, -79.3832], // Point de départ
-        [43.6572, -79.3872], // Arrêt intermédiaire
-        [43.6612, -79.3912], // Arrêt intermédiaire
-        [43.6652, -79.3952], // Point d'arrivée
-    ];
+    public static readonly torontoCoordinates: [number, number] = [-79.3832, 43.6532];
 
-    return (
-        <div style={{ height: '500px', width: '500px' }}>
-            <MapContainer center={torontoPosition} zoom={12} style={{ height: '100%', width: '100%' }}>
-                <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <Marker position={torontoPosition}>
-                    <Popup>
-                        Toronto, Canada
-                    </Popup>
-                </Marker>
-                {/* Affichage de la ligne de bus */}
-                <BusLine coordinates={busLineCoordinates} color="red" onClick={() => {console.log('et')}} />
-            </MapContainer>
-        </div>
-    );
+    componentDidMount() {
+        if (!this.mapRef.current) return;
+
+        // Crée la carte seulement ici (le div existe enfin)
+        this.map = new mapboxgl.Map({
+            container: this.mapRef.current,
+            style: 'mapbox://styles/clementmartins/cmh0o7rch000e01s7g2psbnz8',
+            center: MapToronto.torontoCoordinates,
+            zoom: 14,
+            pitch: 20,
+            hash: true,
+        });
+
+        this.map.on('style.load', () => {
+            console.log('Style chargé 🌧️ ajout de la pluie');
+
+            // Helper pour ajuster l’effet selon le zoom
+            const zoomBasedReveal = (value: number) => [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10,
+                0.0,
+                13,
+                value,
+            ];
+
+            this.map?.setRain({
+                density: zoomBasedReveal(0.1),
+                intensity: 1.0,
+                color: '#a8adbc',
+                opacity: 0.7,
+                vignette: zoomBasedReveal(1.0),
+                'vignette-color': '#464646',
+                direction: [0, 80],
+                'droplet-size': [2.6, 18.2],
+                'distortion-strength': 0.7,
+                'center-thinning': 0, // pluie sur toute la carte
+            });
+        });
+    }
+
+    componentWillUnmount() {
+        if (this.map) {
+            this.map.remove();
+            this.map = null;
+        }
+    }
+
+    render() {
+        return (
+            <div
+                ref={this.mapRef}
+                id="map"
+                style={{ width: '500px', height: '500px' }}
+            />
+        );
+    }
 }
