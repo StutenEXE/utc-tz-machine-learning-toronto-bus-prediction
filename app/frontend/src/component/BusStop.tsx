@@ -1,51 +1,63 @@
-import {Layer, Source} from "react-map-gl/mapbox";
-import {useEffect} from "react";
+import { useEffect } from "react";
+import mapboxgl from "mapbox-gl";
 
 interface BusStopProps {
-    position: number[];
+    map: mapboxgl.Map;
+    position: [number, number];
     color: string;
     name: string;
     fillColor?: string;
 }
 
-export function BusStop({ position, color, name, fillColor =  '#fff' }: BusStopProps) {
-    const busStopMarkerProps = {
-        radius: 8,
-        fillColor: fillColor,
-        color: color,
-        weight: 3,
-        opacity: 1,
-        fillOpacity: 0.8,
-    };
+export function BusStop({ map, position, color, name, fillColor = "#fff" }: BusStopProps) {
 
     useEffect(() => {
-        console.log(`BusStop ${name} mounted at position:`, position);
-    }, []);
-    return (
-        <Source
-            id={name}
-            type="geojson"
-            data={{
-                type: 'Feature',
+        const sourceId = `${name}-source`;
+        const layerId = `${name}-layer`;
+
+        if (map.getSource(sourceId)) return;
+
+        map.addSource(sourceId, {
+            type: "geojson",
+            data: {
+                type: "Feature",
+                properties: { name },
                 geometry: {
-                    type: 'Point',
-                    coordinates: position,
+                    type: "Point",
+                    coordinates: position
+                }
+            }
+        });
+
+        const buildingLayer = map.getStyle().layers?.find(l => l.id.includes("building"));
+        const beforeId = buildingLayer ? buildingLayer.id : undefined;
+
+        map.addLayer(
+            {
+                id: layerId,
+                type: "circle",
+                source: sourceId,
+                paint: {
+                    "circle-radius": 8,
+                    "circle-pitch-scale": "viewport",
+                    "circle-stroke-width": 3,
+                    "circle-color": fillColor,
+                    "circle-stroke-color": color
                 },
-            }}
-            >
-            <Layer
-                id={`${name}-layer`}
-                type="circle"
-                paint={{
-                    'circle-radius': busStopMarkerProps.radius,
-                    'circle-color': busStopMarkerProps.fillColor,
-                    'circle-stroke-color': busStopMarkerProps.color,
-                    'circle-stroke-width': busStopMarkerProps.weight,
-                    'circle-opacity': busStopMarkerProps.opacity,
-                    'circle-fill-opacity': busStopMarkerProps.fillOpacity,
-                }}
-                //Show popup on click
-            ></Layer>
-        </Source>
-    );
+                minzoom: 13,
+            },
+            beforeId
+        );
+
+        console.log(`Adding bus stop layer ${layerId}...`);
+
+        return () => {
+            console.debug(`Removing bus stop layer ${layerId}...`);
+            if (map.getLayer(layerId)) map.removeLayer(layerId);
+            if (map.getSource(sourceId)) map.removeSource(sourceId);
+        };
+
+    }, [map, position, color, name, fillColor]);
+
+    return null;
 }

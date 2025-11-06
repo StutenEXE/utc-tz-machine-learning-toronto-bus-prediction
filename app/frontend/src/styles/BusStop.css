@@ -1,8 +1,0 @@
-.bus-stop-marker {
-    width: 20px;
-    height: 20px;
-    background-color: red;   /* couleur dynamique si tu veux changer selon prop */
-    border: 2px solid black;
-    border-radius: 50%;      /* cercle */
-    box-shadow: 0 0 4px rgba(0,0,0,0.5);
-}

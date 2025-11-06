@@ -1,51 +1,72 @@
-import { Source, Layer } from 'react-map-gl/mapbox';
-import {useEffect, useState} from "react";
+import React, { useEffect } from "react";
+import mapboxgl from "mapbox-gl";
 import {BusStop} from "./BusStop.tsx";
 
 interface BusLineProps {
-    coordinates: [number, number][]; // GeoJSON-compatible coordinates
+    map: mapboxgl.Map;
+    coordinates: [number, number][];
     color: string;
-    onClick?: () => void;
+    id: string;
+    name: string;
 }
 
-export function BusLine({ coordinates, color, onClick }: BusLineProps) {
-    const [routeData, setRouteData] = useState(null);
+export function BusLine({ map, coordinates, color, id, name }: BusLineProps) {
+
+    const [lineReady, setLineReady] = React.useState(false);
 
     useEffect(() => {
-        const fetchRoute = async () => {
-            try {
-                const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates.map(coord => coord.join(',')).join(';')}?geometries=geojson&access_token=pk.eyJ1IjoiY2xlbWVudG1hcnRpbnMiLCJhIjoiY21oMGx4cHAxMDI4bDJuczhnb2N0NHd2ZSJ9.vzFXf89w1P83cru30twuAA`;
-                console.log('Fetching route from URL:', url);
-                const response = await fetch(url);
-                const data = await response.json();
-                if(data.code !== 'Ok' || data.routes.length === 0) {
-                    throw new Error('No route found');
-                }
-                setRouteData(data.routes[0].geometry);
-            } catch (error) {
-                console.error('Error fetching route data:', error);
-            }
-        };
-        fetchRoute();
-    }, [coordinates]);
+        if (!map) return;
 
-    return (
-        <>
-            {routeData!==null && (
-                <Source id="bus-line" type="geojson" data={{ type: 'Feature', geometry: routeData }}>
-                    <Layer
-                        id="bus-line-layer"
-                        type="line"
-                        paint={{
-                            'line-color': color,
-                            'line-width': 4,
-                            'line-translate-anchor': 'viewport',
-                            'line-translate': [0, 0],
-                        }}
-                    />
-                    <BusStop position={routeData.coordinates[2]} color={color} name={"BusStop1"} fillColor={'#fff'}></BusStop>
-                </Source>
-            )}
-        </>
+        const sourceId = `${id}-source`;
+        const layerId = `${id}-layer`;
+
+        if (map.getSource(sourceId)) return;
+
+        map.addSource(sourceId, {
+            type: "geojson",
+            data: {
+                type: "Feature",
+                properties: { name },
+                geometry: {
+                    type: "LineString",
+                    coordinates
+                }
+            }
+        });
+
+        const buildingLayer = map.getStyle().layers?.find(l => l.id.includes("building"));
+        const beforeId = buildingLayer ? buildingLayer.id : undefined;
+
+        console.debug(`Adding bus line layer ${layerId}...`);
+        map.addLayer(
+            {
+                id: layerId,
+                type: "line",
+                source: sourceId,
+                paint: {
+                    "line-color": color,
+                    "line-width": 4
+                },
+                layout: {
+                    "line-cap": "round",
+                },
+                minzoom: 11,
+            },
+            beforeId
+        );
+
+        setLineReady(true);
+
+        return () => {
+            console.debug(`Removing bus line layer ${layerId}...`);
+            if (map.getLayer(layerId)) map.removeLayer(layerId);
+            if (map.getSource(sourceId)) map.removeSource(sourceId);
+            setLineReady(false);
+        };
+
+    }, [map, coordinates, color, id, name]);
+
+    return ( lineReady &&
+        <BusStop position={coordinates[2]} color={color} name={'arret 1'} map={map}/>
     );
 }
