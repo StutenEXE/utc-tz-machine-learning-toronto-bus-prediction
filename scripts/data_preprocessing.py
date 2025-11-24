@@ -241,4 +241,4 @@ processed_df = pd.DataFrame(features_processed, columns=column_names)
 processed_df['DELAY_LOG1P'] = df['DELAY_LOG1P'].values
 
 # Save the processed dataset
-processed_df.to_csv('./data/4_processed_dataset.csv', index=False)
+processed_df.to_csv('./data/4_preprocessed_dataset.csv', index=False)
