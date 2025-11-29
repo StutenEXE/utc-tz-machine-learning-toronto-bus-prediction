@@ -190,25 +190,25 @@ class MultiLabelBinarizerWrapper(BaseEstimator, TransformerMixin):
 
 # List of passthrough columns (cyclical encoded and binary features)
 passthrough_columns = [
-    'LOCAL_TIME_HOUR_COS', 'LOCAL_TIME_HOUR_SIN',
-    'LOCAL_TIME_MINUTE_COS', 'LOCAL_TIME_MINUTE_SIN',
-    'WEEK_DAY_COS', 'WEEK_DAY_SIN',
-    'LOCAL_MONTH_COS', 'LOCAL_MONTH_SIN',
-    'LOCAL_DAY_COS', 'LOCAL_DAY_SIN',
-    'WIND_DIRECTION_COS', 'WIND_DIRECTION_SIN',
-    'PRECIP_AMOUNT_BINARY'
+    "LOCAL_TIME_HOUR_COS", "LOCAL_TIME_HOUR_SIN",
+    "LOCAL_TIME_MINUTE_COS", "LOCAL_TIME_MINUTE_SIN",
+    "WEEK_DAY_COS", "WEEK_DAY_SIN",
+    "LOCAL_MONTH_COS", "LOCAL_MONTH_SIN",
+    "LOCAL_DAY_COS", "LOCAL_DAY_SIN",
+    "WIND_DIRECTION_COS", "WIND_DIRECTION_SIN",
+    "PRECIP_AMOUNT_BINARY"
 ]
 
 preprocessor = ColumnTransformer(
     transformers=[
-        # ('yeo_johnson', PowerTransformer(method='yeo-johnson'), yeo_johnson_columns),
-        # ('numerical', StandardScaler(), numerical_columns),
-        ('nominal', OneHotEncoder(), nominal_columns),
-        ('ordinal', OrdinalEncoder(categories=ordinal_categories), ordinal_columns),
-        ('multi_label', MultiLabelBinarizerWrapper(), multi_label_columns),
-        # ('passthrough', 'passthrough', passthrough_columns)
+        ("yeo_johnson", PowerTransformer(method="yeo-johnson"), yeo_johnson_columns),
+        ("numerical", StandardScaler(), numerical_columns),
+        ("nominal", OneHotEncoder(), nominal_columns),
+        ("ordinal", OrdinalEncoder(categories=ordinal_categories), ordinal_columns),
+        ("multi_label", MultiLabelBinarizerWrapper(), multi_label_columns),
+        ("passthrough", "passthrough", passthrough_columns)
     ],
-    remainder='passthrough'
+    remainder="passthrough"
 )
 
 features_processed = preprocessor.fit_transform(df.drop('DELAY_LOG1P', axis=1))
@@ -239,6 +239,11 @@ print(pd.DataFrame(features_processed).head())
 
 processed_df = pd.DataFrame(features_processed, columns=column_names)
 processed_df['DELAY_LOG1P'] = df['DELAY_LOG1P'].values
+
+# Remove Windchill and NaN values
+processed_df = processed_df.drop("numerical__WINDCHILL", axis=1) 
+processed_df = processed_df.drop("yeo_johnson__WINDCHILL", axis=1)
+processed_df = processed_df.dropna()
 
 # Save the processed dataset
 processed_df.to_csv('./data/4_preprocessed_dataset.csv', index=False)
