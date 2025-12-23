@@ -9,8 +9,8 @@ from sklearn.metrics import median_absolute_error # Erreur de la médiane absolu
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.linear_model import ElasticNet, LinearRegression, MultiTaskLasso
 from sklearn.svm import SVR
-
 from xgboost import XGBRegressor
 
 import matplotlib.pyplot as plt
@@ -53,7 +53,7 @@ def create_objective_func(param_tuning_func, create_model_func):
         return rmse  # Optimize for RMSE
     return objective_func
 
-def test_model(name, param_tuning_func, create_model_func):
+def test_model(name, param_tuning_func, create_model_func, n_trials=100):
     """
     This function is a generalization of the optimisation of a model
     """
@@ -61,7 +61,7 @@ def test_model(name, param_tuning_func, create_model_func):
     # generalized objective func creation
     objective_func = create_objective_func(param_tuning_func, create_model_func)
     # hyperoptimization
-    study.optimize(objective_func, n_trials=100)
+    study.optimize(objective_func, n_trials=n_trials)
     # show best hyperparameters & trial
     print(f"{name} - Best trial:")
     trial = study.best_trial
@@ -103,6 +103,37 @@ def tune_params_decision_tree(trial):
         "max_leaf_nodes": trial.suggest_int("max_leaf_nodes", 2, 1000),
         "min_impurity_decrease": trial.suggest_float("min_impurity_decrease", 0.0, 1.0),
         "ccp_alpha": trial.suggest_float("ccp_alpha", 0.0, 0.1),
+    }
+    return params
+
+######################################
+# Test Linear Regression (classical) #
+######################################
+def create_linear_regression(params):
+    return LinearRegression(**params)
+
+def tune_params_linear_regression(trial):
+    params = {
+        "fit_intercept": trial.suggest_categorical("fit_intercept", [True, False]),
+        "copy_X": True, 
+        "positive": trial.suggest_categorical("positive", [True, False]),
+    }
+    return params
+
+###########################################
+# Test Linear Regression (Elasticnet) #
+###########################################
+def create_linear_regression_elasicnet(params):
+    return ElasticNet(**params)
+
+def tune_params_linear_regression_elasticnet(trial):
+    params = {
+        "alpha": trial.suggest_float("alpha", 1e-6, 10.0, log=True),
+        "l1_ratio": trial.suggest_float("l1_ratio", 0.0, 1.0),
+        "fit_intercept": trial.suggest_categorical("fit_intercept", [True, False]),
+        "max_iter": trial.suggest_int("max_iter", 500, 5000),
+        "tol": trial.suggest_float("tol", 1e-6, 1e-2, log=True),
+        "selection": trial.suggest_categorical("selection", ["cyclic", "random"])
     }
     return params
 
@@ -235,11 +266,15 @@ def tune_params_svr(trial):
 
 # Decision Tree testing
 # test_model("Decision Tree", tune_params_decision_tree, create_decision_tree)
+# Linear Regression testing
+# test_model("Linear Regression (classical)", tune_params_linear_regression, create_linear_regression, n_trials=4)
+# Linear Regression Elasticnet testing
+# test_model("Linear Regression (Elasticnet)", tune_params_linear_regression_elasticnet, create_linear_regression_elasicnet)
 # Random Forest testing (very slow)
-# test_model("Random Forest", tune_params_random_forest, create_random_forest)
+# test_model("Random Forest", tune_params_random_forest, create_random_forest, n_trials=1)
 # Gradient Boosting testing
 # test_model("Gradient Boosting", tune_params_gradient_boosting, create_gradient_boosting)
 # XGBoost testing
-# test_model("XGBoost", tune_params_xgboost, create_xgboost)
-# SVR testing
-test_model("SVR", tune_params_svr, create_svr)
+test_model("XGBoost", tune_params_xgboost, create_xgboost)
+# SVR testing (very slow)
+# test_model("SVR", tune_params_svr, create_svr, n_trials=1)

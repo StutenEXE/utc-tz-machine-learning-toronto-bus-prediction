@@ -26,7 +26,7 @@ With :
 * `multi_label_columns`: WEATHER_ENG_DESC_LIST
 * `passthrough_columns`: LOCAL_TIME_HOUR_COS, LOCAL_TIME_HOUR_SIN, LOCAL_TIME_MINUTE_COS, LOCAL_TIME_MINUTE_SIN, WEEK_DAY_COS, WEEK_DAY_SIN, LOCAL_MONTH_COS, LOCAL_MONTH_SIN, LOCAL_DAY_COS, LOCAL_DAY_SIN, WIND_DIRECTION_COS, WIND_DIRECTION_SIN, PRECIP_AMOUNT_BINARY
 
-We are trying to minimise the **RMSE** with optuna on **100 trials**.
+We are trying to minimise the **RMSE** with optuna on **100 trials** except for `Random Forest` and `SVR` (too slow to hyperoptimise on 100 trials).
 
 ### Decision Tree
 
@@ -67,7 +67,62 @@ params = {
 * **MAE :** 0.5427
 * **RMSE :** 0.8220
 
+### Linear Regression (classical)
+
+> Since only 4 cases are needed, only 4 trials are ran
+
+```py
+params = {
+    "copy_X": True, 
+    "fit_intercept": trial.suggest_categorical("fit_intercept", [True, False]),
+    "positive": trial.suggest_categorical("positive", [True, False]),
+}
+```
+**Results :** 
+
+```py
+params = {
+    "fit_intercept": False,
+    "positive": True
+}
+```
+
+* **R2 :** 0.1522 
+* **MAE :** 0.5073 
+* **RMSE :** 0.7906 
+
+### Linear Regression (Elasticnet)
+
+```py
+params = {
+    "alpha": trial.suggest_float("alpha", 1e-6, 10.0, log=True),
+    "l1_ratio": trial.suggest_float("l1_ratio", 0.0, 1.0),
+    "fit_intercept": trial.suggest_categorical("fit_intercept", [True, False]),
+    "max_iter": trial.suggest_int("max_iter", 500, 5000),
+    "tol": trial.suggest_float("tol", 1e-6, 1e-2, log=True),
+    "selection": trial.suggest_categorical("selection", ["cyclic", "random"])
+}
+```
+**Results :** 
+
+```py
+params = {
+    "alpha": 8.375008106892453e-05,
+    "l1_ratio": 0.7415315245111593,
+    "fit_intercept": False,
+    "max_iter": 2067,
+    "tol": 2.1178511999897167e-05,
+    "selection": "random"
+}
+```
+
+* **R2 :** 0.1570 
+* **MAE :** 0.5081 
+* **RMSE :** 0.7860 
+
 ### Random Forest
+
+> Did not receive 100 trials, params tested by hand
 
 **Parameters :**
 
@@ -103,7 +158,7 @@ params = {
     "min_weight_fraction_leaf": ,
     "max_features": ,
     "max_leaf_nodes": ,
-    "min_impurity_decrease": t,
+    "min_impurity_decrease": ,
     "bootstrap": ,
     "oob_score": ,
     "ccp_alpha": 
@@ -160,9 +215,9 @@ params = {
 }
 ```
 
-* **R2 : 0.1675** 
-* **MAE : 0.4600** 
-* **RMSE : 0.7763** 
+* **R2 :** 0.1675 
+* **MAE :** 0.4600 
+* **RMSE :** 0.7763
 
 ### Extreme Gradient Boosting
 
@@ -228,6 +283,8 @@ params = {
 * **RMSE :** 0.7730
 
 ### Support Vector Regression (SVR)
+
+> Did not receive 100 trials, params tested by hand
 
 **Parameters :**
 
