@@ -40,7 +40,7 @@ TEMPORAL VARIABLES
 """
 
 # LOCAL_TIME decomposing and cyclical encoding
-df['LOCAL_TIME'] = pd.to_datetime(df['LOCAL_TIME'], format='%H:%M').dt.time
+df['LOCAL_TIME'] = pd.to_datetime(df['LOCAL_TIME'], format='%H:%M:%S').dt.time
 df['LOCAL_TIME_HOUR'] = pd.to_datetime(df['LOCAL_TIME'], format='%H:%M:%S').dt.hour
 df['LOCAL_TIME_MINUTE'] = pd.to_datetime(df['LOCAL_TIME'], format='%H:%M:%S').dt.minute
 df['LOCAL_TIME_HOUR_COS'], df['LOCAL_TIME_HOUR_SIN'] = cyclical_encoding(df, 'LOCAL_TIME_HOUR', 24)
@@ -206,9 +206,9 @@ preprocessor = ColumnTransformer(
         ("nominal", OneHotEncoder(), nominal_columns),
         ("ordinal", OrdinalEncoder(categories=ordinal_categories), ordinal_columns),
         ("multi_label", MultiLabelBinarizerWrapper(), multi_label_columns),
-        ("passthrough", "passthrough", passthrough_columns)
+        ("passthrough", "passthrough", passthrough_columns)    
     ],
-    remainder="passthrough"
+    remainder="drop"
 )
 
 features_processed = preprocessor.fit_transform(df.drop('DELAY_LOG1P', axis=1))
