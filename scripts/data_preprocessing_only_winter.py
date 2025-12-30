@@ -77,8 +77,6 @@ strictly_numerical_route_filter = df['ROUTE'].astype(str).str.isdigit()
 not_numerical_route_filter = ~strictly_numerical_route_filter
 df = df.drop(index=df[not_numerical_route_filter].index)
 
-# 
-
 # Transform WEATHER_ENG_DESC to a list of conditions
 df['WEATHER_ENG_DESC_LIST'] = df['WEATHER_ENG_DESC'].str.split(',')
 # Regroup weather conditions into broader categories
@@ -105,11 +103,14 @@ def month_to_season(month):
 df['SEASON'] = df['LOCAL_MONTH'].apply(month_to_season)
 df = df.drop(columns=['LOCAL_MONTH'])
 
+# REMOVING SUMMER 
+df = df[df['SEASON'] == 'Winter']
+df = df.drop(columns=['SEASON'])
+
 # List of nominal columns with no special transformation needed (all except WEATHER_ENG_DESC_LIST)
 nominal_columns = [
     "ROUTE",
     "INCIDENT",
-    "SEASON",
 ]
 
 multi_label_columns = ['WEATHER_ENG_DESC_LIST']
@@ -245,5 +246,6 @@ processed_df['DELAY_LOG1P'] = df['DELAY_LOG1P'].values
 # Remove NaN values
 processed_df = processed_df.dropna()
 
+
 # Save the processed dataset
-processed_df.to_csv('./data/4_preprocessed_dataset.csv', index=False)
+processed_df.to_csv('./data/4_preprocessed_dataset_winter.csv', index=False)
