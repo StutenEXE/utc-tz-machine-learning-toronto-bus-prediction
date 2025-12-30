@@ -19,7 +19,7 @@
 ```
 
 With : 
-* `yeo_johnson_columns`: WINDCHILL
+* `yeo_johnson_columns`: None
 * `numerical_columns`: TEMP, DEW_POINT_TEMP, HUMIDEX, RELATIVE_HUMIDITY, STATION_PRESSURE, WINDCHILL, WIND_SPEED
 * `nominal_columns`: ROUTE, SEASON
 * `ordinal_columns`: VISIBILITY
@@ -107,22 +107,22 @@ params = {
 
 ```py
 params = {
-    "alpha": 8.375008106892453e-05,
-    "l1_ratio": 0.7415315245111593,
-    "fit_intercept": False,
-    "max_iter": 2067,
-    "tol": 2.1178511999897167e-05,
-    "selection": "random"
+    "alpha": 8.361975955594563e-05,
+    "l1_ratio": 0.9303832352916346,
+    "fit_intercept": True,
+    "max_iter": 2423,
+    "tol": 4.7634195627406606e-05,
+    "selection": "cyclic"
 }
 ```
 
-* **R2 :** 0.1570 
-* **MAE :** 0.5081 
-* **RMSE :** 0.7860 
+* **R2 :** 0.1580 
+* **MAE :** 0.5074 
+* **RMSE :** 0.7852 
 
 ### Random Forest
 
-> Did not receive 100 trials, params tested by hand
+> Did not execute 100 trials due to extremely long execution times. We executed only one test with the following parametes.
 
 **Parameters :**
 
@@ -150,24 +150,26 @@ params = {
 
 ```py
 params = {
-    "n_estimators": ,
-    "criterion": ,
-    "max_depth": ,
-    "min_samples_split": ,
-    "min_samples_leaf": ,
-    "min_weight_fraction_leaf": ,
-    "max_features": ,
-    "max_leaf_nodes": ,
-    "min_impurity_decrease": ,
-    "bootstrap": ,
-    "oob_score": ,
-    "ccp_alpha": 
+    "n_estimators": 196,
+    "criterion": "friedman_mse",
+    "max_depth": 18,
+    "min_samples_split": 3,
+    "min_samples_leaf": 16,
+    "min_weight_fraction_leaf": 0.1809064501842486,
+    "max_features": None,
+    "max_leaf_nodes": 2291,
+    "min_impurity_decrease": 0.4108320315273585,
+    "bootstrap": True,
+    "oob_score": True,
+    "ccp_alpha": 0.045736035093430466
 }
 ```
 
-* **R2 :**
-* **MAE :** 
-* **RMSE :** 
+* **R2 : -0.0000**
+* **MAE : 0.6249** 
+* **RMSE : 0.9324** 
+
+> Prediction takes a lot of time ?
 
 ### Gradient Boosting
 
@@ -262,25 +264,25 @@ if params["booster"] == "dart":
 
 ```py
 params = {
-    "n_estimators": 718,
-    "learning_rate": 0.1378845274673234,
-    "max_depth": 3,
-    "min_child_weight": 5.779363234001181,
-    "gamma": 1.3347316990873304,
+    "n_estimators": 1460,
+    "learning_rate": 0.029022154673694605,
+    "max_depth": 6,
+    "min_child_weight": 0.036966563791124035,
+    "gamma": 1.2058416828401688,
     "max_delta_step": 1,
-    "reg_alpha": 0.5116514543542413,
-    "reg_lambda": 0.26770415074019227,
-    "subsample": 0.8990198028208541,
-    "colsample_bytree": 0.9910918190899611,
-    "colsample_bylevel": 0.7807303399482364,
-    "colsample_bynode": 0.7535982152586627,
+    "reg_alpha": 7.097356259294756e-05,
+    "reg_lambda": 6.992267340011537,
+    "subsample": 0.7803480587165372,
+    "colsample_bytree": 0.8975027882958538,
+    "colsample_bylevel": 0.805113554624949,
+    "colsample_bynode": 0.7360328738293106,
     "booster": "gbtree"
 }
 ```
 
-* **R2 :** 0.1710
-* **MAE :** 0.5046
-* **RMSE :** 0.7730
+* **R2 :** 0.1776
+* **MAE :** 0.5018
+* **RMSE :** 0.7668
 
 ### Support Vector Regression (SVR)
 
@@ -309,10 +311,15 @@ elif kernel == "sigmoid":
 
 ```py
 params = {
-    
+    "kernel": sigmoid
+    "C": 11.931344511999319
+    "epsilon": 0.0001980182512556867
+    "shrinking": False
+    "gamma": scale
+    "coef0": 0.06189453252754218
 }
 ```
 
-* **R2 :** 
-* **MAE :** 
-* **RMSE :** 
+* **R2 : -2903126.8054** 
+* **MAE : 1177.5853** 
+* **RMSE : 2706987.0807** 
