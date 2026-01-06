@@ -5,7 +5,7 @@
 * Train (60%)/Validation (20%)/Test (20%) split with Train for training models, Validation for hyperparameters optimisation and Test for final testing
 * Season variable created (Summer/Winter)
 * ALL NAN VALUES REMOVED
-
+* Target is transformed by LOG1P
 * Following transformations
 
 ```py
@@ -86,7 +86,7 @@ params = {
 ```
 
 * **R2 :** 0.2921 
-* **MAE :** 0.4898 
+* **MAE :** 0.4898 maximize
 * **RMSE :** 0.6560 
 
 ### Linear Regression (Elasticnet)
@@ -273,6 +273,28 @@ params = {
 * **MAE :** 0.4746
 * **RMSE :** 0.6212
 
+> Test with r² maximisation
+>```py
+params = {
+    "n_estimators": 1236,
+    "learning_rate": 0.0313923876812973,
+    "max_depth": 9,
+    "min_child_weight": 6.014600609509807,
+    "gamma": 2.6680304612895065,
+    "max_delta_step": 3,
+    "reg_alpha": 3.8071116085239384e-05,
+    "reg_lambda": 0.0006293589732767163,
+    "subsample": 0.8625686073282707,
+    "colsample_bytree": 0.8422167488737703,
+    "colsample_bylevel": 0.6524388161783657,
+    "colsample_bynode": 0.7633436352327931,
+    "booster": "gbtree"
+}
+```
+> * **R2 :** 0.3365
+> * **MAE :** 0.4695
+> * **RMSE :** 0.5995
+
 ### Support Vector Regression (SVR)
 
 > Did not execute 100 trials due to extremely long execution times. We executed only 5 tests with the following parameters.
@@ -316,6 +338,7 @@ params = {
 
 * Train (40%)/Validation (30%)/Test (30%) split with Train for training models, Validation for hyperparameters optimisation and Test for final testing
 * Only winter data
+* Target is transformed by LOG1P
 * Following transformations
 
 ```py
@@ -628,6 +651,7 @@ params = {
 
 * Train (60%)/Validation (20%)/Test (20%) split with Train for training models, Validation for hyperparameters optimisation and Test for final testing
 * Only summer data
+* Target is transformed by LOG1P
 * Following transformations
 
 ```py
@@ -935,3 +959,275 @@ params = {
 * **R2 : 0.2053** 
 * **MAE : 0.4885** 
 * **RMSE : 0.7183** 
+
+## Scenario 4 - GAMs
+
+* Train (60%)/Validation (20%)/Test (20%) split with Train for training models, Validation for hyperparameters optimisation and Test for final testing
+* Season variable created (Summer/Winter)
+* ALL NAN VALUES REMOVED
+* No numerical scaling
+* Target is transformed by LOG1P
+* Following transformations
+
+```py
+("nominal", OrdinalEncoder(), nominal_columns),
+("ordinal", OrdinalEncoder(categories=ordinal_categories), ordinal_columns),
+("multi_label", MultiLabelBinarizerWrapper(), multi_label_columns),
+("passthrough", "passthrough", passthrough_columns)    
+```
+
+With : 
+* `yeo_johnson_columns`: None
+* `nominal_columns`: ROUTE, INCIDENT, SEASON
+* `ordinal_columns`: VISIBILITY
+* `multi_label_columns`: WEATHER_ENG_DESC_LIST
+* `passthrough_columns`: LOCAL_TIME_HOUR, LOCAL_TIME_MINUTE, WEEK_DAY, LOCAL_MONTH, LOCAL_DAY, WIND_DIRECTION, PRECIP_AMOUNT_BINARY, TEMP, DEW_POINT_TEMP, HUMIDEX, RELATIVE_HUMIDITY, STATION_PRESSURE, WIND_SPEED
+
+And
+```py
+generic_cols_transf = (
+    f(0) +  # ROUTE - nominal
+    f(1) +  # INCIDENT - nominal
+    f(2) +  # SEASON - nominal
+    s(3) +  # VISIBILITY - ordinal
+    f(4) +  # Clear - binary
+    f(5) +  # Fog - binary
+    f(6) +  # Rain - binary
+    f(7) +  # Snow - binary
+    f(8) +  # Thunderstorms - binary
+    s(9, basis="cp", edge_knots=[0, 24]) +  # LOCAL_TIME_HOUR - cyclical
+    s(10, basis="cp", edge_knots=[0, 60]) +  # LOCAL_TIME_MINUTE - cyclical
+    s(11, basis="cp", edge_knots=[0, 7]) +  # WEEK_DAY - cyclical
+    s(12, basis="cp", edge_knots=[1, 12]) +  # LOCAL_MONTH - cyclical
+    s(13, basis="cp", edge_knots=[1, 31]) +  # LOCAL_DAY - cyclical
+    s(14, basis="cp", edge_knots=[0, 360]) +  # WIND_DIRECTION - cyclical
+    f(15) +  # PRECIP_AMOUNT_BINARY - binary
+    s(16) +  # TEMP - continuous
+    s(17) +  # DEW_POINT_TEMP - continuous
+    s(18) +  # HUMIDEX - continuous
+    s(19) +  # RELATIVE_HUMIDITY - continuous
+    s(20) +  # STATION_PRESSURE - continuous
+    s(21)    # WIND_SPEED - continuous
+)
+```
+
+We are trying to minimise the **RMSE** with optuna.
+
+### LinearGAM
+
+**Parameters :**
+
+```py
+params = {
+    "n_splines": n_splines,
+    "lam": trial.suggest_float("lam", 1e-6, 1e3, log=True),
+    "max_iter": trial.suggest_int("max_iter", 100, 1000),
+    "tol": trial.suggest_float("tol", 1e-6, 1e-3, log=True),
+}
+```
+
+**Results :** 
+
+```py
+params = {
+    "n_splines": 5,
+    "lam": 0.3879848363855412,
+    "max_iter": 949,
+    "tol": 1.040858968295515e-06
+}
+```
+
+* **R2 : 0.2958** 
+* **MAE : 0.4896** 
+* **RMSE : 0.6526** 
+
+### GammaGAM
+
+**Parameters :**
+
+```py
+params = {
+    "n_splines": trial.suggest_int("n_splines", 5, 30),
+    "lam": trial.suggest_float("lam", 1e-6, 1e3, log=True),
+    "max_iter": trial.suggest_int("max_iter", 100, 1000),
+    "tol": trial.suggest_float("tol", 1e-6, 1e-3, log=True),
+}
+```
+
+**Results :** 
+
+```py
+params = {
+    "n_splines": 7,
+    "lam": 6.996430731372631,
+    "max_iter": 451,
+    "tol": 2.2074610650990642e-05
+}
+```
+
+* **R2 : 0.2838** 
+* **MAE : 0.4975** 
+* **RMSE : 0.6637** 
+
+### PoissonGAM
+
+> Did not execute 100 trials due to long execution times. We executed only 25 tests with the following parameters.
+
+**Parameters :**
+
+```py
+params = {
+    "n_splines": trial.suggest_int("n_splines", 5, 30),
+    "lam": trial.suggest_float("lam", 1e-6, 1e3, log=True),
+    "max_iter": trial.suggest_int("max_iter", 100, 1000),
+    "tol": trial.suggest_float("tol", 1e-6, 1e-3, log=True),
+}
+```
+
+**Results :** 
+
+```py
+params = {
+    "n_splines": 26,
+    "lam": 1.9491937350065412e-05,
+    "max_iter": 844,
+    "tol": 4.3436155909000126e-06
+}
+```
+
+* **R2 : 0.2179** 
+* **MAE : 0.5648** 
+* **RMSE : 0.7248** 
+
+## Scenario 5 - GAMs only winter
+
+* Train (60%)/Validation (20%)/Test (20%) split with Train for training models, Validation for hyperparameters optimisation and Test for final testing
+* Season variable created (Summer/Winter)
+* ALL NAN VALUES REMOVED
+* No numerical scaling
+* Only winter data
+* Target is transformed by LOG1P
+* Following transformations
+
+```py
+("nominal", OrdinalEncoder(), nominal_columns),
+("ordinal", OrdinalEncoder(categories=ordinal_categories), ordinal_columns),
+("multi_label", MultiLabelBinarizerWrapper(), multi_label_columns),
+("passthrough", "passthrough", passthrough_columns)    
+```
+
+With : 
+* `yeo_johnson_columns`: None
+* `nominal_columns`: ROUTE, INCIDENT, SEASON
+* `ordinal_columns`: VISIBILITY
+* `multi_label_columns`: WEATHER_ENG_DESC_LIST
+* `passthrough_columns`: LOCAL_TIME_HOUR, LOCAL_TIME_MINUTE, WEEK_DAY, LOCAL_MONTH, LOCAL_DAY, WIND_DIRECTION, PRECIP_AMOUNT_BINARY, TEMP, DEW_POINT_TEMP, HUMIDEX, RELATIVE_HUMIDITY, STATION_PRESSURE, WIND_SPEED
+
+And
+```py
+generic_cols_transf = (
+    f(0) +  # ROUTE - nominal
+    f(1) +  # INCIDENT - nominal
+    s(2) +  # VISIBILITY - ordinal
+    f(3) +  # Clear - binary
+    f(4) +  # Fog - binary
+    f(5) +  # Rain - binary
+    f(6) +  # Snow - binary
+    f(7) +  # Thunderstorms - binary
+    s(8, basis="cp", edge_knots=[0, 24]) +  # LOCAL_TIME_HOUR - cyclical
+    s(9, basis="cp", edge_knots=[0, 60]) +  # LOCAL_TIME_MINUTE - cyclical
+    s(10, basis="cp", edge_knots=[0, 7]) +  # WEEK_DAY - cyclical
+    s(11, basis="cp", edge_knots=[1, 12]) +  # LOCAL_MONTH - cyclical
+    s(12, basis="cp", edge_knots=[1, 31]) +  # LOCAL_DAY - cyclical
+    s(13, basis="cp", edge_knots=[0, 360]) +  # WIND_DIRECTION - cyclical
+    f(14) +  # PRECIP_AMOUNT_BINARY - binary
+    s(15) +  # TEMP - continuous
+    s(16) +  # DEW_POINT_TEMP - continuous
+    s(17) +  # HUMIDEX - continuous
+    s(18) +  # RELATIVE_HUMIDITY - continuous
+    s(19) +  # STATION_PRESSURE - continuous
+    s(20)    # WIND_SPEED - continuous
+)
+```
+
+We are trying to minimise the **RMSE** with optuna.
+
+### LinearGAM
+
+**Parameters :**
+
+```py
+params = {
+    "n_splines": n_splines,
+    "lam": trial.suggest_float("lam", 1e-6, 1e3, log=True),
+    "max_iter": trial.suggest_int("max_iter", 100, 1000),
+    "tol": trial.suggest_float("tol", 1e-6, 1e-3, log=True),
+}
+```
+
+**Results :** 
+
+```py
+params = {
+    "n_splines": 5,
+    "lam": 6.400741604996376,
+    "max_iter": 500,
+    "tol": 0.00028849210409862127
+}
+```
+
+* **R2 : 0.3142** 
+* **MAE : 0.4947** 
+* **RMSE : 0.6515** 
+
+### GammaGAM
+
+**Parameters :**
+
+```py
+params = {
+    "n_splines": trial.suggest_int("n_splines", 5, 30),
+    "lam": trial.suggest_float("lam", 1e-6, 1e3, log=True),
+    "max_iter": trial.suggest_int("max_iter", 100, 1000),
+    "tol": trial.suggest_float("tol", 1e-6, 1e-3, log=True),
+}
+```
+
+**Results :** 
+
+```py
+params = {
+    
+}
+```
+
+* **R2 : ** 
+* **MAE : ** 
+* **RMSE : ** 
+
+### PoissonGAM
+
+> Did not execute 100 trials due to long execution times. We executed only 25 tests with the following parameters.
+
+**Parameters :**
+
+```py
+params = {
+    "n_splines": trial.suggest_int("n_splines", 5, 30),
+    "lam": trial.suggest_float("lam", 1e-6, 1e3, log=True),
+    "max_iter": trial.suggest_int("max_iter", 100, 1000),
+    "tol": trial.suggest_float("tol", 1e-6, 1e-3, log=True),
+}
+```
+
+**Results :** 
+
+```py
+params = {
+   
+}
+```
+
+* **R2 : ** 
+* **MAE : ** 
+* **RMSE : ** 

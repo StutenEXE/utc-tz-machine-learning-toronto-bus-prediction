@@ -51,7 +51,7 @@ def create_objective_func(param_tuning_func, create_model_func):
         # predict values
         y_pred = model.predict(X_val)
         r2, mae, rmse = eval_model(y_val, y_pred)
-        return rmse  # Optimize for RMSE
+        return rmse  # Optimize for R2
     return objective_func
 
 def test_model(id, name, param_tuning_func, create_model_func, n_trials=100):
