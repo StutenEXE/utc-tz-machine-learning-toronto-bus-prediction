@@ -8,9 +8,9 @@ id=2 # id used to describe the model training scenario we are executing (see ./r
 df = pd.read_csv('./data/4_preprocessed_dataset_winter.csv')
 
 # Split between train set, and the combined test and val sets
-X_train, X_test_val, y_train, y_test_val = train_test_split(df.drop(columns=["DELAY_LOG1P"]), df["DELAY_LOG1P"], test_size=0.6, random_state=99)
+X_train, X_test_val, y_train, y_test_val = train_test_split(df.drop(columns=["DELAY_LOG1P"]), df["DELAY_LOG1P"], test_size=0.6)
 # Split the test and val sets in their respective sets
-X_val, X_test, y_val, y_test = train_test_split(X_test_val, y_test_val, test_size=0.5, random_state=66)
+X_val, X_test, y_val, y_test = train_test_split(X_test_val, y_test_val, test_size=0.5)
 
 setValues(X_train, y_train, X_val, y_val, X_test, y_test)
 
