@@ -16,7 +16,6 @@ TARGET VARIABLE
 df['DELAY_LOG1P'] = np.log1p(df['DELAY'])
 df = df.drop(columns=['DELAY'])
 
-
 """
 TEMPORAL VARIABLES
 """
@@ -74,11 +73,14 @@ def month_to_season(month):
         return 'Winter'
 df['SEASON'] = df['LOCAL_MONTH'].apply(month_to_season)
 
+# REMOVING SUMMER 
+df = df[df['SEASON'] == 'Summer']
+df = df.drop(columns=['SEASON'])
+
 # List of nominal columns with no special transformation needed (all except WEATHER_ENG_DESC_LIST)
 nominal_columns = [
     "ROUTE",
     "INCIDENT",
-    "SEASON",
 ]
 
 multi_label_columns = ['WEATHER_ENG_DESC_LIST']
@@ -123,16 +125,6 @@ numerical_columns = [
     "WIND_SPEED",
 ]
 
-
-"""
-REMOVING OUTLIERS
-"""
-
-# Clip the outliers
-for col in numerical_columns:
-    lower_bound = df[col].quantile(0.01)
-    upper_bound = df[col].quantile(0.99)
-    df[col] = df[col].clip(lower=lower_bound, upper=upper_bound)
 
 """
 PREPROCESSOR
@@ -185,12 +177,17 @@ preprocessor = ColumnTransformer(
     verbose_feature_names_out=False,
 )
 
+# Clip the outliers
+for col in numerical_columns:
+    lower_bound = df[col].quantile(0.01)
+    upper_bound = df[col].quantile(0.99)
+    df[col] = df[col].clip(lower=lower_bound, upper=upper_bound)
 
 features_processed = preprocessor.fit_transform(df.drop('DELAY_LOG1P', axis=1))
 # Convert sparse matrix to dense array
 if hasattr(features_processed, 'toarray'):
     features_processed = features_processed.toarray()
-# Get the names of the processed features
+# Get the names of tWinterhe processed features
 column_names = preprocessor.get_feature_names_out()
 
 # Verify the shape of the processed features
@@ -219,4 +216,4 @@ processed_df['DELAY_LOG1P'] = df['DELAY_LOG1P'].values
 processed_df = processed_df.dropna()
 
 # Save the processed dataset
-processed_df.to_csv('./data/4_preprocessed_dataset_pygam.csv', index=False)
+processed_df.to_csv('./data/4_preprocessed_dataset_pygam_summer.csv', index=False)

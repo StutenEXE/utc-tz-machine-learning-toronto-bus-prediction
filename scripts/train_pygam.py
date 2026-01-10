@@ -2,9 +2,6 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from train_utils_pygam import *
 from pygam import s, f
-from sklearn.metrics import r2_score, mean_squared_error
-import numpy as np
-import matplotlib.pyplot as plt
 
 id=4 # id used to describe the model training scenario we are executing (see ./reports/training_results.md)
 
