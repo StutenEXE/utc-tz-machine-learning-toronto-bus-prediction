@@ -3,9 +3,9 @@ from sklearn.model_selection import train_test_split
 from train_utils_pygam import *
 from pygam import s, f
 
-id=5 # id used to describe the model training scenario we are executing (see ./reports/training_results.md)
+id=6 # id used to describe the model training scenario we are executing (see ./reports/training_results.md)
 
-df = pd.read_csv('./data/4_preprocessed_dataset_pygam_winter.csv')
+df = pd.read_csv('./data/4_preprocessed_dataset_pygam_summer.csv')
 
 
 # Split between train set, and the combined test and val sets
@@ -44,8 +44,8 @@ generic_cols_transf = (
 )
 
 # LinearGAM testing
-# test_model(id, "LinearGAM", generic_cols_transf, tune_params_linear_gam, create_linear_gam)
+test_model(id, "LinearGAM", generic_cols_transf, tune_params_linear_gam, create_linear_gam)
 # GammaGAM testing
-test_model(id, "GammaGAM", generic_cols_transf, tune_params_gamma_gam, create_gamma_gam)
+# test_model(id, "GammaGAM", generic_cols_transf, tune_params_gamma_gam, create_gamma_gam)
 # PoissonGAM testing
 # test_model(id, "PoissonGAM", generic_cols_transf, tune_params_poisson_gam, create_poisson_gam, n_trials=25)
