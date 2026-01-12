@@ -2,16 +2,18 @@ import React from "react";
 import mapboxgl from "mapbox-gl";
 import { Weather } from "./Weather.tsx";
 import BusLinesPanel from "./BusLinesPanel.tsx";
+import StatsPanel from "./StatsPanel.tsx";
 import { useBusDataNormalized } from "../hooks/useBusDataNormalized.ts";
 import { useBusMapLayers } from "../hooks/useBusMapLayers.ts";
 import { buildGeoJSONNormalized } from "../map/buildGeoJSONNormalized.ts";
+import styles from "./MapToronto.module.css";
 
 export default function MapToronto() {
     const mapContainerRef = React.useRef<HTMLDivElement>(null);
     const mapRef = React.useRef<mapboxgl.Map | null>(null);
     const [isMapReady, setIsMapReady] = React.useState(false);
 
-    const { lineIds, selectedLineIds, linesById, stopsById, toggleLine } = useBusDataNormalized();
+    const { lineIds, selectedLineIds, linesById, stopsById, toggleLine } = useBusDataNormalized(3);
     const { setGeoData } = useBusMapLayers(mapRef, isMapReady);
 
     // init map
@@ -73,10 +75,17 @@ export default function MapToronto() {
 
     return (
         <>
-            <div ref={mapContainerRef} style={{ width: "100vw", height: "100vh" }} />
+            <div ref={mapContainerRef} className={styles.mapContainer} />
 
             {isMapReady && (
                 <>
+                    <StatsPanel
+                        selectedLineIds={selectedLineIds}
+                        lineIds={lineIds}
+                        linesById={linesById}
+                        stopsById={stopsById}
+                    />
+
                     <BusLinesPanel
                         lineIds={lineIds.map(String)}
                         selected={new Set(Array.from(selectedLineIds).map(String))}
