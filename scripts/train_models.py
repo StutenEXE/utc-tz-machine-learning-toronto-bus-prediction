@@ -33,3 +33,6 @@ test_model(id, "Decision Tree", tune_params_decision_tree, create_decision_tree)
 # test_model(id, "XGBoost", tune_params_xgboost, create_xgboost)
 # SVR testing (very slow)
 # test_model(id, "SVR", tune_params_svr, create_svr, n_trials=5)
+
+# Train and export XGBoost model with fixed parameters
+

@@ -1,13 +1,10 @@
 import optuna
 import pandas as pd
-import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_absolute_error #  MAE
 from sklearn.metrics import mean_squared_error  # RMSE
-from sklearn.metrics import median_absolute_error # Erreur de la médiane absolue
-from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.linear_model import ElasticNet, LinearRegression, MultiTaskLasso

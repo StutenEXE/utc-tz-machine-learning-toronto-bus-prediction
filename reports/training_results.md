@@ -1101,8 +1101,7 @@ params = {
 
 ## Scenario 5 - GAMs only winter
 
-* Train (60%)/Validation (20%)/Test (20%) split with Train for training models, Validation for hyperparameters optimisation and Test for final testing
-* Season variable created (Summer/Winter)
+* Train (80%)/Validation (10%)/Test (10%) split with Train for training models, Validation for hyperparameters optimisation and Test for final testing
 * ALL NAN VALUES REMOVED
 * No numerical scaling
 * Only winter data
@@ -1197,13 +1196,16 @@ params = {
 
 ```py
 params = {
-    
+    "n_splines": 8,
+    "lam": 4.137967988157594,
+    "max_iter": 291,
+    "tol": 9.0734547318602e-05
 }
 ```
 
-* **R2 : ** 
-* **MAE : ** 
-* **RMSE : ** 
+* **R2 :** 0.2781 
+* **MAE :** 0.4929 
+* **RMSE :** 0.6372
 
 ### PoissonGAM
 
@@ -1224,10 +1226,147 @@ params = {
 
 ```py
 params = {
-   
+    "n_splines": 22,
+    "lam": 1.4981548572944945,
+    "max_iter": 495,
+    "tol": 3.8603138507428227e-05
 }
 ```
 
-* **R2 : ** 
-* **MAE : ** 
-* **RMSE : ** 
+* **R2 :** 0.1899
+* **MAE :** 0.5833
+* **RMSE :** 0.7444
+
+## Scenario 6 - GAMs only summer
+
+* Train (80%)/Validation (10%)/Test (10%) split with Train for training models, Validation for hyperparameters optimisation and Test for final testing
+* ALL NAN VALUES REMOVED
+* No numerical scaling
+* Only summer data
+* Target is transformed by LOG1P
+* Following transformations
+
+```py
+("nominal", OrdinalEncoder(), nominal_columns),
+("ordinal", OrdinalEncoder(categories=ordinal_categories), ordinal_columns),
+("multi_label", MultiLabelBinarizerWrapper(), multi_label_columns),
+("passthrough", "passthrough", passthrough_columns)    
+```
+
+With : 
+* `yeo_johnson_columns`: None
+* `nominal_columns`: ROUTE, INCIDENT, SEASON
+* `ordinal_columns`: VISIBILITY
+* `multi_label_columns`: WEATHER_ENG_DESC_LIST
+* `passthrough_columns`: LOCAL_TIME_HOUR, LOCAL_TIME_MINUTE, WEEK_DAY, LOCAL_MONTH, LOCAL_DAY, WIND_DIRECTION, PRECIP_AMOUNT_BINARY, TEMP, DEW_POINT_TEMP, HUMIDEX, RELATIVE_HUMIDITY, STATION_PRESSURE, WIND_SPEED
+
+And
+```py
+generic_cols_transf = (
+    f(0) +  # ROUTE - nominal
+    f(1) +  # INCIDENT - nominal
+    s(2) +  # VISIBILITY - ordinal
+    f(3) +  # Clear - binary
+    f(4) +  # Fog - binary
+    f(5) +  # Rain - binary
+    f(6) +  # Snow - binary
+    f(7) +  # Thunderstorms - binary
+    s(8, basis="cp", edge_knots=[0, 24]) +  # LOCAL_TIME_HOUR - cyclical
+    s(9, basis="cp", edge_knots=[0, 60]) +  # LOCAL_TIME_MINUTE - cyclical
+    s(10, basis="cp", edge_knots=[0, 7]) +  # WEEK_DAY - cyclical
+    s(11, basis="cp", edge_knots=[1, 12]) +  # LOCAL_MONTH - cyclical
+    s(12, basis="cp", edge_knots=[1, 31]) +  # LOCAL_DAY - cyclical
+    s(13, basis="cp", edge_knots=[0, 360]) +  # WIND_DIRECTION - cyclical
+    f(14) +  # PRECIP_AMOUNT_BINARY - binary
+    s(15) +  # TEMP - continuous
+    s(16) +  # DEW_POINT_TEMP - continuous
+    s(17) +  # HUMIDEX - continuous
+    s(18) +  # RELATIVE_HUMIDITY - continuous
+    s(19) +  # STATION_PRESSURE - continuous
+    s(20)    # WIND_SPEED - continuous
+)
+```
+
+We are trying to minimise the **RMSE** with optuna.
+
+### LinearGAM
+
+**Parameters :**
+
+```py
+params = {
+    "n_splines": n_splines,
+    "lam": trial.suggest_float("lam", 1e-6, 1e3, log=True),
+    "max_iter": trial.suggest_int("max_iter", 100, 1000),
+    "tol": trial.suggest_float("tol", 1e-6, 1e-3, log=True),
+}
+```
+
+**Results :** 
+
+```py
+params = {
+    "n_splines": 7,
+    "lam": 0.17608365605896287,
+    "max_iter": 362,
+    "tol": 3.204106745231952e-06
+}
+```
+
+* **R2 :** 0.2742 
+* **MAE :** 0.4608
+* **RMSE :** 0.6160
+
+### GammaGAM
+
+**Parameters :**
+
+```py
+params = {
+    "n_splines": trial.suggest_int("n_splines", 5, 30),
+    "lam": trial.suggest_float("lam", 1e-6, 1e3, log=True),
+    "max_iter": trial.suggest_int("max_iter", 100, 1000),
+    "tol": trial.suggest_float("tol", 1e-6, 1e-3, log=True),
+}
+```
+
+**Results :** 
+
+```py
+params = {
+}
+```
+
+* **R2 :**
+* **MAE :** 
+* **RMSE :** 
+
+### PoissonGAM
+
+> Did not execute 100 trials due to long execution times. We executed only 25 tests with the following parameters.
+
+**Parameters :**
+
+```py
+params = {
+    "n_splines": trial.suggest_int("n_splines", 5, 30),
+    "lam": trial.suggest_float("lam", 1e-6, 1e3, log=True),
+    "max_iter": trial.suggest_int("max_iter", 100, 1000),
+    "tol": trial.suggest_float("tol", 1e-6, 1e-3, log=True),
+}
+```
+
+**Results :** 
+
+```py
+params = {
+    "n_splines": 21,
+    "lam": 0.27892287949265293,
+    "max_iter": 765,
+    "tol": 9.912575933470949e-06
+}
+```
+
+* **R2 :** 0.1784
+* **MAE :** 0.5582
+* **RMSE :** 0.7279

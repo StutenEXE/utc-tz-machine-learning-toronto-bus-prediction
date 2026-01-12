@@ -9,7 +9,7 @@ df = pd.read_csv('./data/4_preprocessed_dataset_pygam_winter.csv')
 
 
 # Split between train set, and the combined test and val sets
-X_train, X_test_val, y_train, y_test_val = train_test_split(df.drop(columns=["DELAY_LOG1P"]), df["DELAY_LOG1P"], test_size=0.4)
+X_train, X_test_val, y_train, y_test_val = train_test_split(df.drop(columns=["DELAY_LOG1P"]), df["DELAY_LOG1P"], test_size=0.2)
 # Split the test and val sets in their respective sets
 X_val, X_test, y_val, y_test = train_test_split(X_test_val, y_test_val, test_size=0.5)
 
@@ -44,8 +44,8 @@ generic_cols_transf = (
 )
 
 # LinearGAM testing
-# test_model(id, "LinearGAM", generic_cols_transf, tune_params_linear_gam, create_linear_gam)
+test_model(id, "LinearGAM", generic_cols_transf, tune_params_linear_gam, create_linear_gam)
 # GammaGAM testing
-test_model(id, "GammaGAM", generic_cols_transf, tune_params_gamma_gam, create_gamma_gam)
+# test_model(id, "GammaGAM", generic_cols_transf, tune_params_gamma_gam, create_gamma_gam)
 # PoissonGAM testing
 # test_model(id, "PoissonGAM", generic_cols_transf, tune_params_poisson_gam, create_poisson_gam, n_trials=25)
