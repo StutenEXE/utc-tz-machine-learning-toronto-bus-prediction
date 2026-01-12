@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import MultiLabelBinarizer, OrdinalEncoder, StandardScaler, OneHotEncoder, PowerTransformer
+import joblib
 
 def cyclical_encoding(df, column, max_value):
     """
@@ -214,6 +215,8 @@ preprocessor = ColumnTransformer(
 )
 
 features_processed = preprocessor.fit_transform(df.drop('DELAY_LOG1P', axis=1))
+# Export the preprocessor
+joblib.dump(preprocessor, './models/preprocessor.pkl')
 # Convert sparse matrix to dense array
 if hasattr(features_processed, 'toarray'):
     features_processed = features_processed.toarray()
