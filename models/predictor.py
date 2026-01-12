@@ -131,21 +131,19 @@ def predict(data_row):
     processed_row = preprocessing(data_row)
     print(processed_row)
     pred = model.predict(processed_row)
-    return pred[0]
+    return np.expm1(pred[0])
 
 # Testing the predict function
 if __name__ == "__main__":
     # Load CSV file
     csv_file = './data/3_eda_dataset.csv'
     df = pd.read_csv(csv_file).dropna()
-
-    print(df.columns)
     
     # Extract a random row
     random_row = df.sample(n=1).iloc[0].to_dict()
     
     # Test the predict function
     result = predict(random_row)
-    print(f"LOG1P prediction: {result}, real : {random_row['DELAY_LOG1P']}")
-    print(f"Prediction: {np.expm1(result)}, real : {np.expm1(random_row['DELAY_LOG1P'])}")
+    print(f"Prediction: {result}, real : {random_row['DELAY_LOG1P']}")
+    print(f"LOG1P prediction: {np.log1p(result)}, real : {np.log1p(random_row['DELAY_LOG1P'])}")
 
