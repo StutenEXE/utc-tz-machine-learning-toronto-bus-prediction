@@ -39,7 +39,7 @@ export default function StatsPanel({ selectedLineIds, linesById }: Props) {
                         External: 0,
                         Other: 0
                     };
-                    
+
                     for(const prediction of linePrediction) {
                         byIncident[prediction.incident] += prediction.prediction;
                         delayTotal += prediction.prediction;
@@ -85,7 +85,7 @@ export default function StatsPanel({ selectedLineIds, linesById }: Props) {
             }))
             .sort((a, b) => b.activityScore - a.activityScore)
             .slice(0, 5);
-        
+
         setTopLinesData(lineDelays);
 
         const incidentTotals: Record<IncidentType, number> = {

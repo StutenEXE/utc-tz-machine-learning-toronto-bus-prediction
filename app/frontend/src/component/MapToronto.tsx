@@ -4,6 +4,8 @@ import { Weather } from "./Weather.tsx";
 import BusLinesPanel from "./BusLinesPanel.tsx";
 import StatsPanel from "./StatsPanel.tsx";
 import { useBusDataNormalized } from "../hooks/useBusDataNormalized.ts";
+import { useBusMapLayers } from "../hooks/useBusMapLayers.ts";
+import { buildGeoJSONNormalized } from "../map/buildGeoJSONNormalized.ts";
 import styles from "./MapToronto.module.css";
 import {WeatherService} from "../services/WeatherService.tsx";
 import type {WeatherData} from "../../../backend/src/Model/Model.ts";
@@ -14,6 +16,8 @@ export default function MapToronto() {
     const [isMapReady, setIsMapReady] = React.useState(false);
     const [weather, setWeather] = React.useState<WeatherData | null>(null);
 
+    const { lineIds, selectedLineIds, linesById, stopsById, toggleLine } = useBusDataNormalized(3);
+    const { setGeoData } = useBusMapLayers(mapRef, isMapReady);
     const { lineIds, selectedLineIds, linesById, toggleLine } = useBusDataNormalized(3);
 
     // init map
@@ -22,14 +26,12 @@ export default function MapToronto() {
 
         mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string;
 
-        console.debug("Creating map...");
         const map = new mapboxgl.Map({
             container: mapContainerRef.current!,
             style: "mapbox://styles/clementmartins/cmh0o7rch000e01s7g2psbnz8",
             center: [-79.3832, 43.6532],
             zoom: 12
         });
-
 
         map.on("load", () => {
             mapRef.current = map;
@@ -70,6 +72,14 @@ export default function MapToronto() {
             setIsMapReady(false);
         };
     }, []);
+
+    // build + push geojson
+    React.useEffect(() => {
+        if (!isMapReady) return;
+
+        const { linesFC, stopsFC } = buildGeoJSONNormalized(linesById, stopsById, selectedLineIds);
+        setGeoData(linesFC as any, stopsFC as any);
+    }, [isMapReady, linesById, stopsById, selectedLineIds, setGeoData]);
 
     return (
         <>
