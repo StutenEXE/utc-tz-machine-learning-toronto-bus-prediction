@@ -5,6 +5,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import MultiLabelBinarizer, OrdinalEncoder, StandardScaler, OneHotEncoder, PowerTransformer
 import joblib
 from sklearn.metrics import r2_score
+from scipy import stats
 from sklearn.metrics import mean_absolute_error #  MAE
 from sklearn.metrics import mean_squared_error  # RMSE
 
@@ -29,7 +30,7 @@ class MultiLabelBinarizerWrapper(BaseEstimator, TransformerMixin):
     def get_feature_names_out(self, input_features=None):
         return np.array([str(cls) for cls in self.mlb.classes_])
 
-preprocessor = joblib.load('./models/preprocessor.pkl')
+preprocessor = joblib.load('./models/preprocessor_opt.pkl')
 
 def preprocessing(data_row):
     df = pd.DataFrame([data_row])
@@ -127,7 +128,7 @@ def preprocessing(data_row):
 
 
 def predict(data_row):
-    model = joblib.load('./models/xgb_model.pkl')
+    model = joblib.load('./models/xgb_model_opt.pkl')
     processed_row = preprocessing(data_row)
     print(processed_row)
     pred = model.predict(processed_row)
