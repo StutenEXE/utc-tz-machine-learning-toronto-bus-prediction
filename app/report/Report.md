@@ -73,8 +73,6 @@ Afin de corriger ces problèmes, une séparation plus nette des responsabilités
 
 Cette séparation permet de conserver une approche déclarative au niveau des données, tout en respectant le fonctionnement impératif et optimisé de Mapbox GL.
 
----
-
 ### Mutualisation des sources et des layers
 
 L’amélioration la plus significative concerne la gestion des sources et des layers Mapbox. Au lieu de créer un layer par ligne et par arrêt, l’architecture a été repensée autour de la mutualisation :
@@ -88,8 +86,6 @@ Les lignes et les arrêts sont désormais représentés sous forme de `FeatureCo
 
 Cette approche réduit drastiquement le nombre de layers actifs sur la carte, ce qui améliore immédiatement les performances du rendu.
 
----
-
 ### Mise à jour des données via les sources existantes
 
 Plutôt que de créer et détruire dynamiquement des layers à chaque interaction utilisateur, les mises à jour s’effectuent désormais par le biais de la méthode `setData` des sources GeoJSON existantes.
@@ -101,7 +97,6 @@ Lorsqu’un utilisateur sélectionne ou désélectionne une ligne :
 
 Ce mécanisme évite les opérations coûteuses liées à la manipulation répétée des layers et s’inscrit dans les bonnes pratiques recommandées par Mapbox GL pour des applications interactives à grande échelle.
 
----
 
 ### Gestion fiable et performante des sélections
 
@@ -109,7 +104,6 @@ La gestion des lignes sélectionnées repose désormais sur l’utilisation d’
 
 Cette représentation s’intègre naturellement aux propriétés des entités GeoJSON et facilite la reconstruction des jeux de données à afficher en fonction de l’état applicatif.
 
----
 
 ### Allègement du cycle de rendu React
 
@@ -121,7 +115,6 @@ React se limite à :
 
 Le rendu graphique est entièrement pris en charge par Mapbox GL, ce qui limite les rerenders inutiles et améliore la réactivité globale de l’application.
 
----
 
 ### Résultats et bénéfices observés
 
@@ -133,90 +126,7 @@ La nouvelle architecture permet d’obtenir plusieurs améliorations notables :
 
 ---
 
-![POC](./images/POC.png)
-
-## Création des routes avec les données GTFS
-
-## Amélioration du rendu et des performances
-L’amélioration des performances de l’application cartographique a constitué un axe de travail majeur du projet. L’objectif n’était pas uniquement de rendre l’interface plus fluide, mais surtout de mettre en place une architecture plus cohérente et plus adaptée aux contraintes du rendu cartographique WebGL, tout en conservant les avantages offerts par React pour la gestion de l’interface et de l’état applicatif.
-
-### Analyse de la problématique initiale
-
-Dans la version initiale de l’application, chaque ligne de bus ainsi que chaque arrêt étaient gérés de manière indépendante. Concrètement, cela se traduisait par la création d’une source et d’un layer Mapbox pour chaque ligne, et souvent d’un autre couple source/layer pour les arrêts associés. À cette structure s’ajoutait un composant React dédié par ligne, chargé d’instancier ces éléments graphiques.
-
-Cette approche, bien que conceptuellement simple et proche du paradigme déclaratif de React, s’est révélée inadaptée aux contraintes de Mapbox GL. Le moteur de rendu de Mapbox repose sur WebGL et sur une gestion interne optimisée des couches graphiques. La multiplication des sources et des layers entraînait une surcharge importante du GPU et du CPU, provoquant des ralentissements notables lors du zoom, du déplacement de la carte ou encore lors de la sélection simultanée de plusieurs lignes.
-
-De plus, la synchronisation fine entre le cycle de rendu de React et les opérations impératives de Mapbox (ajout et suppression de layers) augmentait la complexité du code et rendait l’application plus difficile à maintenir et à faire évoluer.
-
-
-### Principe de refonte retenu
-
-Afin de corriger ces problèmes, une séparation plus nette des responsabilités entre React et Mapbox GL a été mise en place. Le principe fondamental retenu est le suivant :
-
-- React est utilisé pour la gestion de l’état applicatif, la logique métier et l’interface utilisateur (panneau de sélection des lignes, recherche, interactions utilisateur).
-- Mapbox GL est responsable exclusivement du rendu graphique et de l’affichage des données géographiques.
-
-Cette séparation permet de conserver une approche déclarative au niveau des données, tout en respectant le fonctionnement impératif et optimisé de Mapbox GL.
-
----
-
-### Mutualisation des sources et des layers
-
-L’amélioration la plus significative concerne la gestion des sources et des layers Mapbox. Au lieu de créer un layer par ligne et par arrêt, l’architecture a été repensée autour de la mutualisation :
-
-- Une unique source GeoJSON regroupe l’ensemble des lignes de bus.
-- Un seul layer de type `line` est utilisé pour afficher toutes les lignes.
-- Une seconde source GeoJSON regroupe l’ensemble des arrêts.
-- Un unique layer de type `circle` est dédié à l’affichage des arrêts.
-
-Les lignes et les arrêts sont désormais représentés sous forme de `FeatureCollection` GeoJSON. Chaque entité contient des propriétés descriptives (identifiant de ligne, couleur, nom, etc.) permettant de différencier les éléments et de personnaliser leur apparence sans multiplier les layers.
-
-Cette approche réduit drastiquement le nombre de layers actifs sur la carte, ce qui améliore immédiatement les performances du rendu.
-
----
-
-### Mise à jour des données via les sources existantes
-
-Plutôt que de créer et détruire dynamiquement des layers à chaque interaction utilisateur, les mises à jour s’effectuent désormais par le biais de la méthode `setData` des sources GeoJSON existantes.
-
-Lorsqu’un utilisateur sélectionne ou désélectionne une ligne :
-- les données GeoJSON correspondantes sont reconstruites côté React,
-- les sources Mapbox existantes sont mises à jour avec ces nouvelles données,
-- Mapbox se charge automatiquement d’actualiser le rendu graphique.
-
-Ce mécanisme évite les opérations coûteuses liées à la manipulation répétée des layers et s’inscrit dans les bonnes pratiques recommandées par Mapbox GL pour des applications interactives à grande échelle.
-
----
-
-### Gestion fiable et performante des sélections
-
-La gestion des lignes sélectionnées repose désormais sur l’utilisation d’identifiants uniques stockés dans une structure de type `Set<string>`. Ce choix permet d’éviter les problèmes liés aux comparaisons par référence d’objets JavaScript, tout en garantissant des opérations de sélection et de désélection rapides et fiables.
-
-Cette représentation s’intègre naturellement aux propriétés des entités GeoJSON et facilite la reconstruction des jeux de données à afficher en fonction de l’état applicatif.
-
----
-
-### Allègement du cycle de rendu React
-
-Un autre bénéfice important de cette refonte réside dans la réduction du travail effectué par React lors des mises à jour graphiques. Les éléments visuels lourds (lignes et arrêts) ne sont plus liés directement au cycle de rendu des composants React.
-
-React se limite à :
-- mettre à jour l’état global,
-- déclencher les reconstructions de données lorsque cela est nécessaire.
-
-Le rendu graphique est entièrement pris en charge par Mapbox GL, ce qui limite les rerenders inutiles et améliore la réactivité globale de l’application.
-
----
-
-### Résultats et bénéfices observés
-
-La nouvelle architecture permet d’obtenir plusieurs améliorations notables :
-- une fluidité accrue lors de la navigation sur la carte,
-- une réduction significative de la charge GPU et CPU,
-- une meilleure lisibilité et maintenabilité du code,
-- une base technique plus solide pour des optimisations futures telles que le chargement à la demande des lignes, la simplification géométrique ou l’adaptation du niveau de détail en fonction du zoom.
-
----
+![POC](./images/amelioration.png)
 
 
 ## Intégration du service de prédiction des retards
@@ -241,21 +151,9 @@ Le modèle a été optimisé pour garantir à la fois performance et simplicité
 - **Transformation des variables météorologiques** : regroupement des conditions météo similaires, binarisation des précipitations, catégorisation de la visibilité.
 - **Prétraitement standardisé** via un pipeline scikit-learn sauvegardé (preprocessor.pkl).
 
-Le fichier `predictor.py` a été simplifié en :
-- Supprimant les imports inutilisés
-- Ajoutant une documentation claire
-- Optimisant le chargement paresseux (lazy loading) des modèles
-- Retirant le code de test pour ne garder que les fonctions essentielles
-
 ### API de prédiction
 
-L'API Flask (`prediction_api.py`) expose deux endpoints principaux :
-
-**Health Check**
-```
-GET /health
-```
-Retourne le statut de santé de l'API.
+L'API Flask (`app.py`) expose un endpoint :
 
 **Prédiction de retard**
 ```
@@ -271,7 +169,7 @@ Le backend TypeScript fait office d'intermédiaire entre le front-end et le serv
 
 - **Service de prédiction** (`predictionService.ts`) : Gère la communication avec l'API Flask, incluant la gestion d'erreurs et la vérification de santé.
 
-- **Routes REST** (`busRoutes.ts`) : Expose un endpoint `POST /lines/:id/prediction` permettant d'obtenir des prédictions pour une ligne spécifique.
+- **Routes REST** (`busRoutes.ts`) : Expose un endpoint `POST /lines/:id/prediction/:incident` permettant d'obtenir des prédictions pour une ligne et un incident spécifique.
 
 - **Service de lignes** (`busService.ts`) : Intègre les appels de prédiction dans la logique métier existante.
 
@@ -281,13 +179,11 @@ L'URL de l'API de prédiction est configurable via la variable d'environnement `
 
 Côté interface utilisateur, les prédictions sont intégrées dans le panneau de statistiques :
 
-- **Service de prédiction** (`PredictionService.tsx`) : Encapsule les appels API vers le backend et fournit des méthodes utilitaires pour générer des données de test.
+- **Service de prédiction** (`PredictionService.tsx`) : Encapsule les appels API vers le backend.
 
 - **Panneau de statistiques** (`StatsPanel.tsx`) : 
   - Charge automatiquement les prédictions lorsqu'une ligne est sélectionnée
   - Affiche le retard prédit en minutes pour chaque ligne
-  - Indique visuellement l'état de chargement des prédictions
-  - Combine prédictions réelles et indicateurs de risque pour une vue complète
 
 - **Styles** (`StatsPanel.module.css`) : Une section dédiée présente les retards prédits avec un design cohérent (badge coloré, bordures arrondies).
 
@@ -339,6 +235,9 @@ npm install
 npm run dev
 ```
 L'interface utilisateur est accessible sur `http://localhost:5173`.
+(A condition de spécifié les token nécessaire pour les API dans les __.en__ de chaque module):
+- FrontEnd: VITE_MAPBOX_ACCESS_TOKEN et VITE_API_BASE_URL
+- Backend: MAPBOX_ACCESS_TOKEN, PORT, PREDICTION_API_URL, BASELINE_LINE_FOR_PREDICTIONS, WEATHER_API_URL, WEATHER_API_KEY
 
 ### Utilisation de la fonctionnalité de prédiction
 
@@ -351,162 +250,41 @@ L'interface utilisateur est accessible sur `http://localhost:5173`.
 
 Les prédictions sont calculées en temps réel en tenant compte des conditions météorologiques actuelles et de l'heure de la journée.
 
----
+## Intégration du service de données météorologiques
 
-## Intégration du service de données météorologiques et de statistiques en temps réel
-
-Pour améliorer la précision et la fiabilité du système de prédiction, deux services majeurs ont été développés :
-1. **Service de données météorologiques** : Fournit des données météorologiques réelles au système prédictif
-2. **Service de statistiques en temps réel** : Remplace les données codées en dur par des analyses basées sur les données historiques
+Pour améliorer la précision et la fiabilité du système de prédiction, un services majeurs a été développés :
+1. **Service de données météorologiques** : Fournit des données météorologiques réelles au système prédictif.
 
 ### Architecture du Service Météorologique
 
-Le service météorologique repose sur les données historiques du dataset climatique de Toronto (2023) et est structuré comme suit :
+Le service météorologique repose sur l'api :https://www.meteosource.com/
 
 **Backend (`weatherService.ts`)** :
-- Lit les données climatiques depuis les fichiers CSV historiques
-- Fournit les données météorologiques les plus récentes disponibles
+- Récupère les données actuel à Toronto via l'API.
 - Implémente un système de cache pour optimiser les performances (1 heure)
-- Expose deux formats de données :
-  - Format d'affichage pour l'interface utilisateur
-  - Format de prédiction compatible avec l'API ML
+- Expose le format de données spécifié par le système prédictif:
 
 **API REST** :
 - `GET /weather/current` : Récupère les conditions météorologiques actuelles
-- `GET /weather/prediction-data` : Récupère les données météo formatées pour le système de prédiction
 
 **Frontend (`WeatherService.tsx`)** : Encapsule les appels API et fournit des méthodes pour récupérer les données météorologiques.
 
 ```typescript
-interface CurrentWeather {
-    temperature: number;
-    dewPoint: number;
-    humidity: number;
-    pressure: number;
-    visibility: number;
-    description: string;
-    windSpeed: number | null;
-    windDirection: number | null;
-    precipitation: number;
-    humidex: number | null;
-    timestamp: string;
+export type WeatherData = {
+    TEMP: number;
+    DEW_POINT_TEMP: number;
+    HUMIDEX: number | null;
+    PRECIP_AMOUNT: number;
+    RELATIVE_HUMIDITY: number;
+    STATION_PRESSURE: number;
+    VISIBILITY: number;
+    WEATHER_ENG_DESC: string;
+    WIND_DIRECTION: number | null;
+    WIND_SPEED: number | null;
+    LOCAL_DATE: string;
+    LOCAL_TIME: string;
+    WEEK_DAY: string;
+    LOCAL_MONTH: number;
+    LOCAL_DAY: number;
 }
 ```
-
-### Architecture du Service de Statistiques
-
-Le service de statistiques analyse le dataset historique des incidents (1_raw_dataset.csv) pour fournir des données réelles au lieu de valeurs mockées.
-
-**Backend (`statsService.ts`)** analyse les données historiques pour calculer :
-
-1. **Activité par ligne** : Score d'activité basé sur :
-   - Le nombre d'incidents (60% du score)
-   - La durée totale des retards (40% du score)
-
-2. **Prédictions par type d'incident** : Utilise le système de prédiction ML pour estimer la probabilité de chaque type d'incident (Safety, Operational, Technical, External, Other) en fonction des conditions météorologiques actuelles
-
-3. **Statistiques globales** : Agrégation des données de toutes les lignes
-
-**API REST** :
-- `GET /stats/global` : Statistiques globales (top lignes + prédictions d'incidents)
-- `GET /stats/top-lines?count=N` : Top N lignes les plus actives
-- `GET /stats/incident-predictions` : Probabilités par type d'incident
-
-**Frontend (`StatsService.tsx`)** : Service qui appelle l'API backend pour récupérer les statistiques
-
-**Architecture globale** :
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Frontend                              │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  StatsPanel Component                                 │  │
-│  │  - Affichage des statistiques en temps réel          │  │
-│  │  - Prédictions par ligne sélectionnée                │  │
-│  └────────────┬──────────────────────────┬────────────────┘  │
-│               │                          │                   │
-│  ┌────────────▼────────────┐  ┌─────────▼──────────────┐  │
-│  │  StatsService           │  │  WeatherService        │  │
-│  │  - getGlobalStats()     │  │  - getCurrentWeather() │  │
-│  │  - getTopLines()        │  │  - getWeatherForPred() │  │
-│  └────────────┬────────────┘  └─────────┬──────────────┘  │
-└───────────────┼───────────────────────────┼──────────────────┘
-                │ HTTP                      │ HTTP
-                ▼                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              TypeScript Backend (Express.js)                 │
-│  ┌──────────────────────┐    ┌──────────────────────────┐  │
-│  │  statsService.ts     │    │  weatherService.ts       │  │
-│  │  - Analyse CSV       │    │  - Lecture CSV climat    │  │
-│  │  - Calcul scores     │    │  - Cache 1h              │  │
-│  │  - Cache 30min       │    │  - Formatage données     │  │
-│  └──────────┬───────────┘    └────────┬─────────────────┘  │
-│             │                         │                     │
-│             │ ┌───────────────────────┘                     │
-│             │ │                                             │
-│             ▼ ▼                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  Data Files                                           │  │
-│  │  - /data/1_raw_dataset.csv (incidents historiques)   │  │
-│  │  - /data/climate/climate-hourly-2023.csv (météo)     │  │
-│  └──────────────────────────────────────────────────────┘  │
-│             │                                               │
-│             ▼                                               │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  predictionService.ts                                 │  │
-│  │  - Appels à l'API Python                             │  │
-│  └───────────────────┬──────────────────────────────────┘  │
-└────────────────────────┼──────────────────────────────────────┘
-                         │ HTTP
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Python Prediction API (Flask)                   │
-│  - Modèle XGBoost pour prédictions de retards              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Intégration dans le Panneau de Statistiques
-
-Le panneau de statistiques a été entièrement refactorisé pour utiliser des données réelles au lieu de valeurs codées en dur :
-
-**Avant** :
-- Données météo mockées (valeurs fixes : température 5°C, humidité 75%, etc.)
-- Top 5 lignes calculé avec formule aléatoire : `((id * 17) % 50) + 20`
-- Prédictions d'incidents fixes : Safety 15%, Operational 35%, Technical 25%, External 18%, Other 7%
-
-**Après** :
-- Données météo réelles extraites du jeu de données climatiques via `WeatherService`
-- Top 5 lignes basé sur l'analyse des incidents réels (score d'activité pondéré)
-- Prédictions d'incidents calculées dynamiquement via le système ML en fonction des conditions météorologiques actuelles
-- Utilisation du service météo pour alimenter les prédictions en temps réel
-
-**Flux de données pour les prédictions** :
-1. L'utilisateur sélectionne une ou plusieurs lignes de bus sur la carte
-2. Le système récupère automatiquement les données météorologiques actuelles via le `WeatherService`
-3. Pour chaque ligne sélectionnée, un appel API est effectué avec les données météo réelles
-4. Le modèle XGBoost génère une prédiction de retard
-5. Les résultats sont affichés en temps réel dans le panneau de statistiques
-
-**Améliorations apportées** :
-1. **Élimination complète des "magic numbers"** : Plus aucune valeur codée en dur
-2. **Données contextuelles** : Utilisation des conditions réelles (heure actuelle, jour de la semaine, météo du dataset)
-3. **Cache intelligent** : Optimisation des performances avec mise en cache (1h pour météo, 30min pour stats)
-4. **Gestion d'erreurs robuste** : Fallback sur valeurs par défaut en cas d'échec de lecture des fichiers
-5. **Architecture modulaire** : Services réutilisables et testables
-6. **Intégration complète** : Les trois systèmes (météo, stats, prédiction) fonctionnent ensemble de manière transparente
-
----
-
-## Conclusion
-
-Ce projet démontre l'intégration réussie d'un système de prédiction de retards dans une application de visualisation de transport urbain. L'architecture modulaire adoptée permet une évolution future facilitée, que ce soit pour améliorer le modèle de prédiction, ajouter de nouvelles sources de données, ou enrichir l'interface utilisateur.
-
-Les principales réalisations incluent :
-- Une carte interactive haute performance avec affichage optimisé des lignes et arrêts
-- Un système de prédiction basé sur l'apprentissage automatique accessible via API
-- Une intégration complète frontend-backend-ML permettant des prédictions en temps réel
-- **Un service de récupération des données météorologiques connecté au système prédictif**
-- **Des statistiques en temps réel basées sur l'analyse des données historiques**
-- **L'élimination complète des valeurs de test et magic numbers au profit d'appels de services**
-- Une documentation technique complète et structurée
-
-L'application offre ainsi aux usagers une vision claire et anticipative de l'état du réseau de transport, leur permettant de mieux planifier leurs déplacements.
