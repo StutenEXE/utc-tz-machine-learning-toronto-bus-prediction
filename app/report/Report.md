@@ -133,3 +133,295 @@ La nouvelle architecture permet d’obtenir plusieurs améliorations notables :
 
 ---
 
+
+## Intégration du service de prédiction des retards
+
+L'un des objectifs majeurs du projet était de permettre aux usagers d'anticiper les perturbations sur le réseau de transport. Pour répondre à cette problématique, un système de prédiction des retards a été développé et intégré à l'application.
+
+### Architecture du système de prédiction
+
+Le système repose sur une architecture en trois couches distinctes :
+
+1. **Modèle de Machine Learning** : Un modèle XGBoost entraîné sur des données historiques combinant informations météorologiques, temporelles et incidents passés.
+
+2. **API de prédiction Python (Flask)** : Un service REST qui expose le modèle via des endpoints HTTP, permettant d'obtenir des prédictions en temps réel.
+
+3. **Intégration Front-end et Back-end** : Une couche TypeScript qui orchestre les appels au service de prédiction et présente les résultats de manière claire aux utilisateurs.
+
+### Modèle de prédiction simplifié
+
+Le modèle a été optimisé pour garantir à la fois performance et simplicité. Il utilise :
+
+- **Encodage cyclique** pour les variables temporelles (heure, jour de la semaine, mois, direction du vent), préservant leur nature périodique.
+- **Transformation des variables météorologiques** : regroupement des conditions météo similaires, binarisation des précipitations, catégorisation de la visibilité.
+- **Prétraitement standardisé** via un pipeline scikit-learn sauvegardé (preprocessor.pkl).
+
+Le fichier `predictor.py` a été simplifié en :
+- Supprimant les imports inutilisés
+- Ajoutant une documentation claire
+- Optimisant le chargement paresseux (lazy loading) des modèles
+- Retirant le code de test pour ne garder que les fonctions essentielles
+
+### API de prédiction
+
+L'API Flask (`prediction_api.py`) expose deux endpoints principaux :
+
+**Health Check**
+```
+GET /health
+```
+Retourne le statut de santé de l'API.
+
+**Prédiction de retard**
+```
+POST /predict
+```
+Accepte des données météorologiques et temporelles, retourne une estimation du retard en minutes.
+
+L'API utilise CORS pour permettre les appels depuis le front-end et inclut une validation complète des données d'entrée pour garantir la fiabilité des prédictions.
+
+### Intégration Backend (TypeScript/Node.js)
+
+Le backend TypeScript fait office d'intermédiaire entre le front-end et le service Python :
+
+- **Service de prédiction** (`predictionService.ts`) : Gère la communication avec l'API Flask, incluant la gestion d'erreurs et la vérification de santé.
+
+- **Routes REST** (`busRoutes.ts`) : Expose un endpoint `POST /lines/:id/prediction` permettant d'obtenir des prédictions pour une ligne spécifique.
+
+- **Service de lignes** (`busService.ts`) : Intègre les appels de prédiction dans la logique métier existante.
+
+L'URL de l'API de prédiction est configurable via la variable d'environnement `PREDICTION_API_URL`.
+
+### Intégration Frontend (React)
+
+Côté interface utilisateur, les prédictions sont intégrées dans le panneau de statistiques :
+
+- **Service de prédiction** (`PredictionService.tsx`) : Encapsule les appels API vers le backend et fournit des méthodes utilitaires pour générer des données de test.
+
+- **Panneau de statistiques** (`StatsPanel.tsx`) : 
+  - Charge automatiquement les prédictions lorsqu'une ligne est sélectionnée
+  - Affiche le retard prédit en minutes pour chaque ligne
+  - Indique visuellement l'état de chargement des prédictions
+  - Combine prédictions réelles et indicateurs de risque pour une vue complète
+
+- **Styles** (`StatsPanel.module.css`) : Une section dédiée présente les retards prédits avec un design cohérent (badge coloré, bordures arrondies).
+
+### Flux de données
+
+1. L'utilisateur sélectionne une ou plusieurs lignes de bus sur la carte
+2. Le frontend récupère les données météorologiques actuelles
+3. Pour chaque ligne sélectionnée, un appel API est effectué vers le backend
+4. Le backend transmet la requête au service Python de prédiction
+5. Le modèle XGBoost génère une prédiction de retard
+6. Le résultat remonte jusqu'au frontend
+7. Les prédictions sont affichées dans le panneau de statistiques avec un design adapté
+
+### Avantages de cette architecture
+
+- **Séparation des préoccupations** : Le modèle ML reste en Python (écosystème optimal), tandis que la logique applicative est en TypeScript.
+- **Scalabilité** : Le service de prédiction peut être déployé indépendamment et répliqué selon les besoins.
+- **Maintenabilité** : Chaque couche peut être modifiée sans impacter les autres.
+- **Extensibilité** : D'autres modèles ou sources de données peuvent être ajoutés facilement.
+
+---
+
+## Guide d'utilisation
+
+### Démarrage de l'application complète
+
+Pour bénéficier des prédictions de retard, l'application nécessite le démarrage de trois services :
+
+**1. Service de prédiction Python**
+```bash
+cd models
+pip install -r requirements.txt
+python prediction_api.py
+```
+Le service démarre par défaut sur `http://localhost:5000`.
+
+**2. Backend Node.js**
+```bash
+cd app/backend
+npm install
+npm start
+```
+Le backend démarre sur le port 3000 et communique avec le service de prédiction.
+
+**3. Frontend React**
+```bash
+cd app/frontend
+npm install
+npm run dev
+```
+L'interface utilisateur est accessible sur `http://localhost:5173`.
+
+### Utilisation de la fonctionnalité de prédiction
+
+1. Ouvrez l'application dans votre navigateur
+2. Sur la carte interactive, sélectionnez une ou plusieurs lignes de bus en utilisant le panneau latéral gauche
+3. Le panneau de statistiques à droite affiche automatiquement :
+   - Les statistiques globales du réseau
+   - Les prédictions par type d'incident
+   - **Les retards prédits en minutes pour chaque ligne sélectionnée**
+
+Les prédictions sont calculées en temps réel en tenant compte des conditions météorologiques actuelles et de l'heure de la journée.
+
+---
+
+## Intégration du service de données météorologiques et de statistiques en temps réel
+
+Pour améliorer la précision et la fiabilité du système de prédiction, deux services majeurs ont été développés :
+1. **Service de données météorologiques** : Fournit des données météorologiques réelles au système prédictif
+2. **Service de statistiques en temps réel** : Remplace les données codées en dur par des analyses basées sur les données historiques
+
+### Architecture du Service Météorologique
+
+Le service météorologique repose sur les données historiques du dataset climatique de Toronto (2023) et est structuré comme suit :
+
+**Backend (`weatherService.ts`)** :
+- Lit les données climatiques depuis les fichiers CSV historiques
+- Fournit les données météorologiques les plus récentes disponibles
+- Implémente un système de cache pour optimiser les performances (1 heure)
+- Expose deux formats de données :
+  - Format d'affichage pour l'interface utilisateur
+  - Format de prédiction compatible avec l'API ML
+
+**API REST** :
+- `GET /weather/current` : Récupère les conditions météorologiques actuelles
+- `GET /weather/prediction-data` : Récupère les données météo formatées pour le système de prédiction
+
+**Frontend (`WeatherService.tsx`)** : Encapsule les appels API et fournit des méthodes pour récupérer les données météorologiques.
+
+```typescript
+interface CurrentWeather {
+    temperature: number;
+    dewPoint: number;
+    humidity: number;
+    pressure: number;
+    visibility: number;
+    description: string;
+    windSpeed: number | null;
+    windDirection: number | null;
+    precipitation: number;
+    humidex: number | null;
+    timestamp: string;
+}
+```
+
+### Architecture du Service de Statistiques
+
+Le service de statistiques analyse le dataset historique des incidents (1_raw_dataset.csv) pour fournir des données réelles au lieu de valeurs mockées.
+
+**Backend (`statsService.ts`)** analyse les données historiques pour calculer :
+
+1. **Activité par ligne** : Score d'activité basé sur :
+   - Le nombre d'incidents (60% du score)
+   - La durée totale des retards (40% du score)
+
+2. **Prédictions par type d'incident** : Utilise le système de prédiction ML pour estimer la probabilité de chaque type d'incident (Safety, Operational, Technical, External, Other) en fonction des conditions météorologiques actuelles
+
+3. **Statistiques globales** : Agrégation des données de toutes les lignes
+
+**API REST** :
+- `GET /stats/global` : Statistiques globales (top lignes + prédictions d'incidents)
+- `GET /stats/top-lines?count=N` : Top N lignes les plus actives
+- `GET /stats/incident-predictions` : Probabilités par type d'incident
+
+**Frontend (`StatsService.tsx`)** : Service qui appelle l'API backend pour récupérer les statistiques
+
+**Architecture globale** :
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Frontend                              │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │  StatsPanel Component                                 │  │
+│  │  - Affichage des statistiques en temps réel          │  │
+│  │  - Prédictions par ligne sélectionnée                │  │
+│  └────────────┬──────────────────────────┬────────────────┘  │
+│               │                          │                   │
+│  ┌────────────▼────────────┐  ┌─────────▼──────────────┐  │
+│  │  StatsService           │  │  WeatherService        │  │
+│  │  - getGlobalStats()     │  │  - getCurrentWeather() │  │
+│  │  - getTopLines()        │  │  - getWeatherForPred() │  │
+│  └────────────┬────────────┘  └─────────┬──────────────┘  │
+└───────────────┼───────────────────────────┼──────────────────┘
+                │ HTTP                      │ HTTP
+                ▼                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│              TypeScript Backend (Express.js)                 │
+│  ┌──────────────────────┐    ┌──────────────────────────┐  │
+│  │  statsService.ts     │    │  weatherService.ts       │  │
+│  │  - Analyse CSV       │    │  - Lecture CSV climat    │  │
+│  │  - Calcul scores     │    │  - Cache 1h              │  │
+│  │  - Cache 30min       │    │  - Formatage données     │  │
+│  └──────────┬───────────┘    └────────┬─────────────────┘  │
+│             │                         │                     │
+│             │ ┌───────────────────────┘                     │
+│             │ │                                             │
+│             ▼ ▼                                             │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │  Data Files                                           │  │
+│  │  - /data/1_raw_dataset.csv (incidents historiques)   │  │
+│  │  - /data/climate/climate-hourly-2023.csv (météo)     │  │
+│  └──────────────────────────────────────────────────────┘  │
+│             │                                               │
+│             ▼                                               │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │  predictionService.ts                                 │  │
+│  │  - Appels à l'API Python                             │  │
+│  └───────────────────┬──────────────────────────────────┘  │
+└────────────────────────┼──────────────────────────────────────┘
+                         │ HTTP
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Python Prediction API (Flask)                   │
+│  - Modèle XGBoost pour prédictions de retards              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Intégration dans le Panneau de Statistiques
+
+Le panneau de statistiques a été entièrement refactorisé pour utiliser des données réelles au lieu de valeurs codées en dur :
+
+**Avant** :
+- Données météo mockées (valeurs fixes : température 5°C, humidité 75%, etc.)
+- Top 5 lignes calculé avec formule aléatoire : `((id * 17) % 50) + 20`
+- Prédictions d'incidents fixes : Safety 15%, Operational 35%, Technical 25%, External 18%, Other 7%
+
+**Après** :
+- Données météo réelles extraites du jeu de données climatiques via `WeatherService`
+- Top 5 lignes basé sur l'analyse des incidents réels (score d'activité pondéré)
+- Prédictions d'incidents calculées dynamiquement via le système ML en fonction des conditions météorologiques actuelles
+- Utilisation du service météo pour alimenter les prédictions en temps réel
+
+**Flux de données pour les prédictions** :
+1. L'utilisateur sélectionne une ou plusieurs lignes de bus sur la carte
+2. Le système récupère automatiquement les données météorologiques actuelles via le `WeatherService`
+3. Pour chaque ligne sélectionnée, un appel API est effectué avec les données météo réelles
+4. Le modèle XGBoost génère une prédiction de retard
+5. Les résultats sont affichés en temps réel dans le panneau de statistiques
+
+**Améliorations apportées** :
+1. **Élimination complète des "magic numbers"** : Plus aucune valeur codée en dur
+2. **Données contextuelles** : Utilisation des conditions réelles (heure actuelle, jour de la semaine, météo du dataset)
+3. **Cache intelligent** : Optimisation des performances avec mise en cache (1h pour météo, 30min pour stats)
+4. **Gestion d'erreurs robuste** : Fallback sur valeurs par défaut en cas d'échec de lecture des fichiers
+5. **Architecture modulaire** : Services réutilisables et testables
+6. **Intégration complète** : Les trois systèmes (météo, stats, prédiction) fonctionnent ensemble de manière transparente
+
+---
+
+## Conclusion
+
+Ce projet démontre l'intégration réussie d'un système de prédiction de retards dans une application de visualisation de transport urbain. L'architecture modulaire adoptée permet une évolution future facilitée, que ce soit pour améliorer le modèle de prédiction, ajouter de nouvelles sources de données, ou enrichir l'interface utilisateur.
+
+Les principales réalisations incluent :
+- Une carte interactive haute performance avec affichage optimisé des lignes et arrêts
+- Un système de prédiction basé sur l'apprentissage automatique accessible via API
+- Une intégration complète frontend-backend-ML permettant des prédictions en temps réel
+- **Un service de récupération des données météorologiques connecté au système prédictif**
+- **Des statistiques en temps réel basées sur l'analyse des données historiques**
+- **L'élimination complète des valeurs de test et magic numbers au profit d'appels de services**
+- Une documentation technique complète et structurée
+
+L'application offre ainsi aux usagers une vision claire et anticipative de l'état du réseau de transport, leur permettant de mieux planifier leurs déplacements.

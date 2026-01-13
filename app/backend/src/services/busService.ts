@@ -1,7 +1,28 @@
 // src/services/bus.service.ts
 import {parse} from "csv-parse/sync";
 import {readFile} from "node:fs/promises";
-import {Arret, Ligne,} from "../Model/Model";
+import {Arret, IncidentType, Ligne, LinePrediction, PredictionInput, PredictionOutput,} from "../Model/Model";
+import {getPrediction} from "./predictionService";
+import {getWeather} from "./weatherService";
+
+// Define the prediction data interface for type safety
+interface PredictionData {
+    LOCAL_TIME: string;
+    WEEK_DAY: string;
+    INCIDENT: string;
+    LOCAL_MONTH: number;
+    LOCAL_DAY: number;
+    TEMP: number;
+    DEW_POINT_TEMP: number;
+    HUMIDEX: number;
+    PRECIP_AMOUNT: number;
+    RELATIVE_HUMIDITY: number;
+    STATION_PRESSURE: number;
+    VISIBILITY: number;
+    WEATHER_ENG_DESC: string;
+    WIND_DIRECTION: number;
+    WIND_SPEED: number;
+}
 
 
 export async function getAllLines() {
@@ -63,6 +84,63 @@ export async function getLineIncidents(id: string) {
     return {}
 }
 
-export async function getLinePrediction(id: string) {
-    return {}
+export async function getLinePrediction(id: string, incidents: IncidentType): Promise<PredictionOutput> {
+    if (!incidents) {
+        return {
+            status: 500,
+            prediction: null,
+            incident: incidents,
+            route: Number(id)
+        }
+    }
+    try {
+        const weather = await getWeather();
+        if (!weather) throw new Error("Weather API returned null");
+        const inputData = {
+            ROUTE: Number(id),
+            LOCAL_TIME: weather.LOCAL_TIME,
+            WEEK_DAY: weather.WEEK_DAY,
+
+            INCIDENT: incidents,
+            LOCAL_MONTH: weather.LOCAL_MONTH,
+            LOCAL_DAY: weather.LOCAL_DAY,
+
+            TEMP: weather.TEMP,
+            DEW_POINT_TEMP: weather.DEW_POINT_TEMP,
+            HUMIDEX: weather.HUMIDEX,
+            PRECIP_AMOUNT: weather.PRECIP_AMOUNT,
+            RELATIVE_HUMIDITY: weather.RELATIVE_HUMIDITY,
+            STATION_PRESSURE: weather.STATION_PRESSURE,
+            VISIBILITY: weather.VISIBILITY,
+            WEATHER_ENG_DESC: weather.WEATHER_ENG_DESC,
+            WIND_DIRECTION: weather.WIND_DIRECTION,
+            WIND_SPEED: weather.WIND_SPEED,
+
+        } as PredictionInput;
+
+        const prediction = await getPrediction(inputData);
+        if (prediction && prediction.success) {
+            return {
+                status: 200,
+                prediction: prediction.prediction,
+                incident: incidents,
+                route: Number(id)
+            } as PredictionOutput;
+        } else {
+            return {
+                status: 500,
+                prediction: null,
+                incident: incidents,
+                route: Number(id)
+            } as PredictionOutput;
+        }
+    } catch (error) {
+        console.error("Error in getLinePrediction:", error);
+        return {
+            status: 500,
+            prediction: null,
+            incident: incidents,
+            route: Number(id)
+        } as PredictionOutput;
+    }
 }

@@ -1,72 +1,121 @@
 import React from "react";
-import type { Ligne, Arret } from "../../../backend/src/Model/Model.ts";
 import styles from "./StatsPanel.module.css";
+import type {IncidentType, Ligne, PredictionOutput} from "../../../backend/src/Model/Model.ts";
+import type {LinePrediction} from "../../../backend/src/Model/Model.ts";
+import {PredictionService} from "../services/PredictionService.tsx";
+
+const MAX_DELAY_MINUTES = 50;
+const DELAY_TO_PERCENT_MULTIPLIER = 2;
 
 type Props = {
     selectedLineIds: Set<number>;
-    lineIds: number[];
     linesById: Record<number, Ligne>;
-    stopsById: Record<number, Arret>;
 };
 
-type IncidentType = "Safety" | "Operational" | "Technical" | "External" | "Other";
+export default function StatsPanel({ selectedLineIds, linesById }: Props) {
+    const [linePredictions, setLinePredictions] = React.useState<Record<number, LinePrediction>>()
+    const [topLinesData, setTopLinesData] = React.useState<Array<{lineId: number, activityScore: number}>>()
+    const [incidentPredictions, setIncidentPredictions] = React.useState<Array<{type: IncidentType, probability: number}>>()
 
-interface IncidentPrediction {
-    type: IncidentType;
-    probability: number;
-}
+    // Lecture des predictions par ligne selectionner
+    React.useEffect(() => {
+        const chargement = async () => {
+            if (selectedLineIds.size === 0) return;
+            const newPredictions: Record<number, LinePrediction> = {};
+            for(const lineId of selectedLineIds) {
+                const linePrediction: PredictionOutput[] = [];
+                for(const ic of ["Safety", "Operational", "Technical", "External", "Other"] as IncidentType[]) {
+                    const result = await PredictionService.getLinePrediction(lineId.toString(), ic);
+                    if(result && result.status == 200) {
+                        linePrediction.push(result);
+                    }
+                }
+                if(linePrediction.length > 0) {
+                    let delayTotal = 0;
+                    const byIncident: Record<IncidentType, number> = {
+                        Safety: 0,
+                        Operational: 0,
+                        Technical: 0,
+                        External: 0,
+                        Other: 0
+                    };
+                    
+                    for(const prediction of linePrediction) {
+                        byIncident[prediction.incident] += prediction.prediction;
+                        delayTotal += prediction.prediction;
+                    }
 
-interface LinePrediction {
-    lineId: number;
-    riskScore: number;
-    topIncident: IncidentType;
-    topIncidentProbability: number;
-}
+                    let topIncident: IncidentType = "Other";
+                    let maxDelay = 0;
+                    Object.entries(byIncident).forEach(([incident, delay]) => {
+                        if (delay > maxDelay) {
+                            maxDelay = delay;
+                            topIncident = incident as IncidentType;
+                        }
+                    });
 
-// Mock data generator for incident predictions
-const generateIncidentPredictions = (): IncidentPrediction[] => {
-    return [
-        { type: "Safety", probability: 0.15 },
-        { type: "Operational", probability: 0.35 },
-        { type: "Technical", probability: 0.25 },
-        { type: "External", probability: 0.18 },
-        { type: "Other", probability: 0.07 },
-    ];
-};
-
-// Mock data generator for line predictions
-const generateLinePrediction = (lineId: number): LinePrediction => {
-    const seed = lineId * 137; // Simple seed for stable random values
-    const riskScore = ((seed % 70) + 10) / 100; // 10-80%
-    
-    const incidents: IncidentType[] = ["Safety", "Operational", "Technical", "External", "Other"];
-    const topIncident = incidents[seed % incidents.length];
-    const topIncidentProbability = ((seed % 50) + 30) / 100; // 30-80%
-    
-    return {
-        lineId,
-        riskScore,
-        topIncident,
-        topIncidentProbability,
-    };
-};
-
-export default function StatsPanel({ selectedLineIds, lineIds, linesById, stopsById: _ }: Props) {
-    const [isMobile, setIsMobile] = React.useState(false);
+                    const lp: LinePrediction = {
+                        lineId: lineId,
+                        isLoading: false,
+                        predictedDelay: delayTotal,
+                        byIncident: byIncident,
+                        topIncident: topIncident
+                    };
+                    console.log("Line Prediction:", lp);
+                    newPredictions[lineId] = lp;
+                }
+            }
+            setLinePredictions(newPredictions);
+        };
+        chargement();
+    }, [selectedLineIds])
 
     React.useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-        checkMobile();
-        window.addEventListener("resize", checkMobile);
-        return () => window.removeEventListener("resize", checkMobile);
-    }, []);
+        if (!linePredictions || Object.keys(linePredictions).length === 0) {
+            setTopLinesData([]);
+            setIncidentPredictions([]);
+            return;
+        }
 
-    // Calculate stats
+        const lineDelays = Object.values(linePredictions)
+            .filter(lp => !lp.isLoading && !lp.error)
+            .map(lp => ({
+                lineId: lp.lineId,
+                activityScore: lp.predictedDelay
+            }))
+            .sort((a, b) => b.activityScore - a.activityScore)
+            .slice(0, 5);
+        
+        setTopLinesData(lineDelays);
+
+        const incidentTotals: Record<IncidentType, number> = {
+            Safety: 0,
+            Operational: 0,
+            Technical: 0,
+            External: 0,
+            Other: 0
+        };
+
+        let totalDelay = 0;
+        Object.values(linePredictions).forEach(lp => {
+            if (!lp.isLoading && !lp.error) {
+                Object.entries(lp.byIncident).forEach(([incident, delay]) => {
+                    incidentTotals[incident as IncidentType] += delay;
+                });
+                totalDelay += lp.predictedDelay;
+            }
+        });
+
+        const incidentPercentages = Object.entries(incidentTotals).map(([type, total]) => ({
+            type: type as IncidentType,
+            probability: totalDelay > 0 ? total / totalDelay : 0
+        }));
+
+        setIncidentPredictions(incidentPercentages);
+    }, [linePredictions]);
+
     const selectedLinesCount = selectedLineIds.size;
-    
-    // Calculate displayed stops count
+
     const displayedStopsCount = React.useMemo(() => {
         const stopIds = new Set<number>();
         Array.from(selectedLineIds).forEach((lineId) => {
@@ -78,211 +127,209 @@ export default function StatsPanel({ selectedLineIds, lineIds, linesById, stopsB
         return stopIds.size;
     }, [selectedLineIds, linesById]);
 
-    // Mock data for incidents and line predictions
-    const incidentPredictions = React.useMemo(() => generateIncidentPredictions(), []);
-    
-    const linePredictions = React.useMemo(() => {
+    const displayedLinePredictions = React.useMemo(() => {
+        if (!linePredictions) return [];
         return Array.from(selectedLineIds)
-            .map((lineId) => generateLinePrediction(lineId))
-            .sort((a, b) => b.riskScore - a.riskScore);
-    }, [selectedLineIds]);
+            .map((lineId) => linePredictions[lineId])
+            .filter((pred): pred is LinePrediction => pred !== undefined)
+            .sort((a, b) => b.predictedDelay - a.predictedDelay);
+    }, [selectedLineIds, linePredictions]);
 
-    // Simple bar chart data for top 5 lines
     const chartData = React.useMemo(() => {
-        const topLines = lineIds.slice(0, 5);
-        return topLines.map((id) => ({
-            id,
-            value: ((id * 17) % 50) + 20, // Mock value 20-70
-        }));
-    }, [lineIds]);
+        if (!topLinesData) return [];
+        if (topLinesData.length > 0) {
+            const maxScore = Math.max(...topLinesData.map(line => line.activityScore), 1);
+            return topLinesData.slice(0, 5).map(line => ({
+                id: line.lineId,
+                value: (line.activityScore / maxScore) * 70,
+            }));
+        }
+        return [];
+    }, [topLinesData]);
 
-    const containerClass = isMobile ? `${styles.container} ${styles.mobile}` : `${styles.container} ${styles.desktop}`;
+    const containerClass = `${styles.container} ${styles.desktop}`;
 
     return (
         <aside className={containerClass} aria-label="Panneau de statistiques">
-            {/* Header */}
             <div className={styles.header}>
-                <h2 className={styles.headerTitle}>
-                    📊 Statistiques
-                </h2>
+                <h2 className={styles.headerTitle}>📊 Statistiques</h2>
             </div>
 
-            {/* Scrollable content */}
             <div className={styles.scrollableContent}>
-                {/* Global Visualization Section */}
                 <section aria-labelledby="global-viz-title">
-                    <h3
-                        id="global-viz-title"
-                        className={styles.sectionTitle}
-                    >
+                    <h3 id="global-viz-title" className={styles.sectionTitle}>
                         Visualisation globale
                     </h3>
-                    
-                    {/* KPI Cards */}
+
                     <div className={styles.kpiGrid}>
                         <div className={`${styles.kpiCard} ${styles.blue}`}>
                             <div className={styles.kpiLabel}>Bus visibles</div>
-                            <div className={`${styles.kpiValue} ${styles.blue}`}>
-                                {/* Placeholder - could be calculated from real-time data */}
-                                -
-                            </div>
+                            <div className={`${styles.kpiValue} ${styles.blue}`}>-</div>
                         </div>
-                        
+
                         <div className={`${styles.kpiCard} ${styles.green}`}>
                             <div className={styles.kpiLabel}>Lignes sélectionnées</div>
-                            <div className={`${styles.kpiValue} ${styles.green}`}>
-                                {selectedLinesCount}
-                            </div>
+                            <div className={`${styles.kpiValue} ${styles.green}`}>{selectedLinesCount}</div>
                         </div>
-                        
+
                         <div className={`${styles.kpiCard} ${styles.orange} ${styles.fullWidth}`}>
                             <div className={styles.kpiLabel}>Arrêts affichés</div>
-                            <div className={`${styles.kpiValue} ${styles.orange}`}>
-                                {displayedStopsCount}
-                            </div>
+                            <div className={`${styles.kpiValue} ${styles.orange}`}>{displayedStopsCount}</div>
                         </div>
                     </div>
 
-                    {/* Simple Bar Chart */}
                     <div className={styles.chartContainer}>
-                        <div className={styles.chartTitle}>
-                            Activité par ligne (Top 5)
-                        </div>
-                        <svg width="100%" height="120" viewBox="0 0 320 120" aria-label="Bar chart of line activity">
-                            {chartData.map((item, index) => {
-                                const barWidth = 50;
-                                const spacing = 64;
-                                const x = index * spacing;
-                                const maxHeight = 80;
-                                const barHeight = (item.value / 70) * maxHeight;
-                                const y = 100 - barHeight;
-                                
+                        <div className={styles.chartTitle}>Top 5 lignes - Temps d'attente (min)</div>
+                        {chartData.length > 0 ? (
+                            <svg width="100%" height="120" viewBox="0 0 320 120" aria-label="Bar chart of line activity">
+                                {chartData.map((item, index) => {
+                                    const barWidth = 50;
+                                    const spacing = 64;
+                                    const x = index * spacing;
+                                    const maxHeight = 80;
+                                    const barHeight = (item.value / 70) * maxHeight;
+                                    const y = 100 - barHeight;
+
+                                    return (
+                                        <g key={item.id}>
+                                            <rect
+                                                x={x}
+                                                y={y}
+                                                width={barWidth}
+                                                height={barHeight}
+                                                fill="rgb(99, 102, 241)"
+                                                opacity="0.7"
+                                                rx="3"
+                                            />
+                                            <text
+                                                x={x + barWidth / 2}
+                                                y="115"
+                                                textAnchor="middle"
+                                                fontSize="11"
+                                                fill="currentColor"
+                                                opacity="0.6"
+                                            >
+                                                {item.id}
+                                            </text>
+                                        </g>
+                                    );
+                                })}
+                            </svg>
+                        ) : (
+                            <div className={styles.emptyState}>
+                                Données indisponibles
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+                <section aria-labelledby="incident-pred-title">
+                    <h3 id="incident-pred-title" className={styles.sectionTitle}>
+                        % de temps par type d'incident
+                    </h3>
+
+                    {incidentPredictions && incidentPredictions.length > 0 ? (
+                        <div className={styles.incidentList}>
+                            {incidentPredictions.map((pred) => {
+                                const percentage = Math.round(pred.probability * 100);
+                                const colorMap: Record<IncidentType, string> = {
+                                    Safety: "safety",
+                                    Operational: "operational",
+                                    Technical: "technical",
+                                    External: "external",
+                                    Other: "other",
+                                };
+                                const colorClass = colorMap[pred.type];
+
                                 return (
-                                    <g key={item.id}>
-                                        <rect
-                                            x={x}
-                                            y={y}
-                                            width={barWidth}
-                                            height={barHeight}
-                                            fill="rgb(99, 102, 241)"
-                                            opacity="0.7"
-                                            rx="3"
-                                        />
-                                        <text
-                                            x={x + barWidth / 2}
-                                            y="115"
-                                            textAnchor="middle"
-                                            fontSize="11"
-                                            fill="currentColor"
-                                            opacity="0.6"
+                                    <div key={pred.type}>
+                                        <div className={styles.incidentHeader}>
+                                            <span className={styles.incidentType}>{pred.type}</span>
+                                            <span className={`${styles.incidentPercentage} ${styles[colorClass]}`}>{percentage}%</span>
+                                        </div>
+                                        <div
+                                            className={styles.progressBar}
+                                            role="progressbar"
+                                            aria-valuenow={percentage}
+                                            aria-valuemin={0}
+                                            aria-valuemax={100}
+                                            aria-label={`${pred.type} incident probability: ${percentage}%`}
                                         >
-                                            {item.id}
-                                        </text>
-                                    </g>
+                                            <div
+                                                className={`${styles.progressBarFill} ${styles[colorClass]}`}
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                        </div>
+                                    </div>
                                 );
                             })}
-                        </svg>
-                    </div>
+                        </div>
+                    ) : (
+                        <div className={styles.emptyState}>
+                            Sélectionnez une ligne pour voir les prédictions
+                        </div>
+                    )}
                 </section>
 
-                {/* Incident Type Predictions Section */}
-                <section aria-labelledby="incident-pred-title">
-                    <h3
-                        id="incident-pred-title"
-                        className={styles.sectionTitle}
-                    >
-                        Prédiction par type d'incidents
-                    </h3>
-                    
-                    <div className={styles.incidentList}>
-                        {incidentPredictions.map((pred) => {
-                            const percentage = Math.round(pred.probability * 100);
-                            const colorMap: Record<IncidentType, string> = {
-                                Safety: "safety",
-                                Operational: "operational",
-                                Technical: "technical",
-                                External: "external",
-                                Other: "other",
-                            };
-                            const colorClass = colorMap[pred.type];
-                            
-                            return (
-                                <div key={pred.type}>
-                                    <div className={styles.incidentHeader}>
-                                        <span className={styles.incidentType}>{pred.type}</span>
-                                        <span className={`${styles.incidentPercentage} ${styles[colorClass]}`}>{percentage}%</span>
-                                    </div>
-                                    <div
-                                        className={styles.progressBar}
-                                        role="progressbar"
-                                        aria-valuenow={percentage}
-                                        aria-valuemin={0}
-                                        aria-valuemax={100}
-                                        aria-label={`${pred.type} incident probability: ${percentage}%`}
-                                    >
-                                        <div
-                                            className={`${styles.progressBarFill} ${styles[colorClass]}`}
-                                            style={{ width: `${percentage}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </section>
-
-                {/* Line Predictions Section */}
                 <section aria-labelledby="line-pred-title">
-                    <h3
-                        id="line-pred-title"
-                        className={styles.sectionTitle}
-                    >
+                    <h3 id="line-pred-title" className={styles.sectionTitle}>
                         Prédictions par ligne
                     </h3>
-                    
+
                     {selectedLineIds.size === 0 ? (
                         <div className={styles.emptyState}>
                             Sélectionnez une ligne pour voir les prédictions
                         </div>
                     ) : (
                         <div className={styles.linePredictionList}>
-                            {linePredictions.map((pred) => {
-                                const riskPercentage = Math.round(pred.riskScore * 100);
-                                const incidentPercentage = Math.round(pred.topIncidentProbability * 100);
-                                
-                                const getRiskColorClass = (score: number) => {
-                                    if (score >= 0.6) return "high";
-                                    if (score >= 0.4) return "medium";
+                            {displayedLinePredictions.map((pred) => {
+                                const delayMinutes = Math.round(pred.predictedDelay);
+
+                                const getDelayColorClass = (delay: number) => {
+                                    if (delay >= 20) return "high";
+                                    if (delay >= 10) return "medium";
                                     return "low";
                                 };
-                                
-                                const colorClass = getRiskColorClass(pred.riskScore);
-                                
+
+                                const colorClass = getDelayColorClass(delayMinutes);
+
                                 return (
-                                    <div
-                                        key={pred.lineId}
-                                        className={styles.linePredictionCard}
-                                    >
+                                    <div key={pred.lineId} className={styles.linePredictionCard}>
                                         <div className={styles.linePredictionHeader}>
                                             <span className={styles.lineName}>Ligne {pred.lineId}</span>
                                             <span className={`${styles.riskScore} ${styles[colorClass]}`}>
-                                                {riskPercentage}%
+                                                {delayMinutes} min
                                             </span>
                                         </div>
-                                        <div className={styles.topIncident}>
-                                            Top incident: {pred.topIncident} ({incidentPercentage}%)
-                                        </div>
+                                        {pred.isLoading ? (
+                                            <div className={styles.predictionDelay}>
+                                                Chargement de la prédiction...
+                                            </div>
+                                        ) : pred.error ? (
+                                            <div className={styles.predictionDelay}>
+                                                Erreur: {pred.error}
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className={styles.topIncident}>
+                                                    Top incident: {pred.topIncident || "N/A"}
+                                                </div>
+                                                <div className={styles.predictionDelay}>
+                                                    Retard prédit: {delayMinutes} min
+                                                </div>
+                                            </>
+                                        )}
                                         <div
                                             className={styles.riskProgressBar}
                                             role="progressbar"
-                                            aria-valuenow={riskPercentage}
+                                            aria-valuenow={Math.min(delayMinutes, MAX_DELAY_MINUTES)}
                                             aria-valuemin={0}
-                                            aria-valuemax={100}
-                                            aria-label={`Risk score for line ${pred.lineId}: ${riskPercentage}%`}
+                                            aria-valuemax={MAX_DELAY_MINUTES}
+                                            aria-label={`Predicted delay for line ${pred.lineId}: ${delayMinutes} minutes`}
                                         >
                                             <div
                                                 className={`${styles.riskProgressBarFill} ${styles[colorClass]}`}
-                                                style={{ width: `${riskPercentage}%` }}
+                                                style={{ width: `${Math.min(delayMinutes * DELAY_TO_PERCENT_MULTIPLIER, 100)}%` }}
                                             />
                                         </div>
                                     </div>

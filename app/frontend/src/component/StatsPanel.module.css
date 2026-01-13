@@ -15,6 +15,7 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
     backdrop-filter: blur(10px);
     padding: 16px;
+    height: 95%;
 }
 
 .container.desktop {
@@ -265,6 +266,17 @@
     font-size: 11px;
     opacity: 0.7;
     margin-bottom: 4px;
+}
+
+.predictionDelay {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgb(99, 102, 241);
+    margin-bottom: 6px;
+    padding: 4px 8px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 4px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
 .riskProgressBar {
