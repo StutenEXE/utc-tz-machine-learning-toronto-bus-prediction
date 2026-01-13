@@ -18,7 +18,6 @@ export default function MapToronto() {
 
     const { lineIds, selectedLineIds, linesById, stopsById, toggleLine } = useBusDataNormalized(3);
     const { setGeoData } = useBusMapLayers(mapRef, isMapReady);
-    const { lineIds, selectedLineIds, linesById, toggleLine } = useBusDataNormalized(3);
 
     // init map
     React.useEffect(() => {
@@ -30,7 +29,7 @@ export default function MapToronto() {
             container: mapContainerRef.current!,
             style: "mapbox://styles/clementmartins/cmh0o7rch000e01s7g2psbnz8",
             center: [-79.3832, 43.6532],
-            zoom: 12
+            zoom: 12,
         });
 
         map.on("load", () => {
