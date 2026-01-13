@@ -1,5 +1,4 @@
 // src/map/WeatherTempControl.ts
-import mapboxgl from "mapbox-gl";
 
 export class WeatherTempControl implements mapboxgl.IControl {
     private _container!: HTMLDivElement;

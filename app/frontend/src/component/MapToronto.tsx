@@ -2,16 +2,21 @@ import React from "react";
 import mapboxgl from "mapbox-gl";
 import { Weather } from "./Weather.tsx";
 import BusLinesPanel from "./BusLinesPanel.tsx";
+import StatsPanel from "./StatsPanel.tsx";
 import { useBusDataNormalized } from "../hooks/useBusDataNormalized.ts";
 import { useBusMapLayers } from "../hooks/useBusMapLayers.ts";
 import { buildGeoJSONNormalized } from "../map/buildGeoJSONNormalized.ts";
+import styles from "./MapToronto.module.css";
+import {WeatherService} from "../services/WeatherService.tsx";
+import type {WeatherData} from "../../../backend/src/Model/Model.ts";
 
 export default function MapToronto() {
     const mapContainerRef = React.useRef<HTMLDivElement>(null);
     const mapRef = React.useRef<mapboxgl.Map | null>(null);
     const [isMapReady, setIsMapReady] = React.useState(false);
+    const [weather, setWeather] = React.useState<WeatherData | null>(null);
 
-    const { lineIds, selectedLineIds, linesById, stopsById, toggleLine } = useBusDataNormalized();
+    const { lineIds, selectedLineIds, linesById, stopsById, toggleLine } = useBusDataNormalized(3);
     const { setGeoData } = useBusMapLayers(mapRef, isMapReady);
 
     // init map
@@ -56,6 +61,10 @@ export default function MapToronto() {
             });
         });
 
+        WeatherService.getCurrentWeather().then(weather => {
+            console.log("Weather:", weather);
+            setWeather(weather);
+        })
         return () => {
             map.remove();
             mapRef.current = null;
@@ -73,17 +82,25 @@ export default function MapToronto() {
 
     return (
         <>
-            <div ref={mapContainerRef} style={{ width: "100vw", height: "100vh" }} />
+            <div ref={mapContainerRef} className={styles.mapContainer} />
 
             {isMapReady && (
                 <>
+                    <StatsPanel
+                        selectedLineIds={selectedLineIds}
+                        linesById={linesById}
+                    />
+
                     <BusLinesPanel
                         lineIds={lineIds.map(String)}
                         selected={new Set(Array.from(selectedLineIds).map(String))}
                         onToggle={(idStr: string) => toggleLine(Number(idStr))}
                     />
-
-                    <Weather map={mapRef.current!} temperature={22} condition="" />
+                    {weather && (
+                        <>
+                            <Weather map={mapRef.current!} temperature={weather.TEMP} condition={weather.WEATHER_ENG_DESC.toLowerCase()} />
+                        </>
+                    )}
                 </>
             )}
         </>
