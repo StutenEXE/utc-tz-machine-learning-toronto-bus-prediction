@@ -1,5 +1,4 @@
 import * as React from "react";
-import mapboxgl from "mapbox-gl";
 
 export function useBusMapLayers(mapRef: React.MutableRefObject<mapboxgl.Map | null>, isReady: boolean) {
     const initDoneRef = React.useRef(false);

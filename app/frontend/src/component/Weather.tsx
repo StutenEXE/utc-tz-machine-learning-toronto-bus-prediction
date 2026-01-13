@@ -1,5 +1,7 @@
 import {useEffect, useRef} from "react";
 import {WeatherTempControl} from "./WeatherTempControl.ts";
+import type { ExpressionSpecification } from "mapbox-gl";
+
 
 interface WeatherProps {
     map: mapboxgl.Map;
@@ -12,9 +14,13 @@ export function Weather({ map, temperature, condition }: WeatherProps) {
     const tempControlRef = useRef<WeatherTempControl | null>(null);
 
     useEffect(() => {
-        const zoomBasedReveal = (value: any) => {
-            return ['interpolate', ['linear'], ['zoom'], 11, 0.0, 13, value];
-        };
+        const zoomBasedReveal = (base: number): ExpressionSpecification => ([
+  		"interpolate",
+  		["linear"],
+  		["zoom"],
+  		10, 0,
+  		14, base,
+	]);
 
         // @ts-ignore
         map.setRain({ density: 0 });

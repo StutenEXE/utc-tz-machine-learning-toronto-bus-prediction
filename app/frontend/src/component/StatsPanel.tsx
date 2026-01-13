@@ -20,7 +20,11 @@ export default function StatsPanel({ selectedLineIds, linesById }: Props) {
     // Lecture des predictions par ligne selectionner
     React.useEffect(() => {
         const chargement = async () => {
-            if (selectedLineIds.size === 0) return;
+            if (selectedLineIds.size === 0){
+		setLinePredictions({});
+                setTopLinesData([]);
+                return;	    
+	    }
             const newPredictions: Record<number, LinePrediction> = {};
             for(const lineId of selectedLineIds) {
                 const linePrediction: PredictionOutput[] = [];

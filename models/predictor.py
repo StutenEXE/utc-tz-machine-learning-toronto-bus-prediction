@@ -36,14 +36,14 @@ def get_preprocessor():
     """Load preprocessor lazily"""
     global preprocessor
     if preprocessor is None:
-        preprocessor = joblib.load(os.path.join(current_dir, 'preprocessor.pkl'))
+        preprocessor = joblib.load(os.path.join(current_dir, 'preprocessor_opt.pkl'))
     return preprocessor
 
 def get_model():
     """Load model lazily"""
     global model
     if model is None:
-        model = joblib.load(os.path.join(current_dir, 'xgb_model.pkl'))
+        model = joblib.load(os.path.join(current_dir, 'xgb_model_opt.pkl'))
     return model
 
 def preprocessing(data_row):
