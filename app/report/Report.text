@@ -798,6 +798,7 @@ LOCAL_DAY: number;
 }
 \end{lstlisting}
 
+
 \subsection{Intégration dans le pipeline de prédiction}
 
 Le service météorologique s’intègre étroitement au système de prédiction. À chaque requête de prédiction pour une ligne donnée, le backend récupère automatiquement les conditions météorologiques via \texttt{/weather/current} et transmet ces données au service Python.
