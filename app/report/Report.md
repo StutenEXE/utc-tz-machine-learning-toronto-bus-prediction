@@ -16,6 +16,17 @@ L’application doit permettre à l’utilisateur de :
 
 - Analyser des statistiques globales du réseau, mettant en évidence les lignes les plus impactées, le niveau global de perturbation et les tendances temporelles.
 
+### Définitions des fonctionnalités et de leurs priorités
+
+| Fonctionnalité                              | Priorité |
+|--------------------------------------------|----------|
+| Carte interactive des lignes et arrêts     | 1        |
+| Prédiction de retards                      | 2        |
+| Statistiques réseau et par ligne           | 3        |
+| Météo actuelle                             | 4        |
+| État du trafic et incidents                | 5        |
+
+
 ## Diagramme de Cas d'Utilisation
 
 Pour représenter les interactions entre les utilisateurs et le système, un diagramme de cas d'utilisation a été élaboré. Ce diagramme illustre les principales fonctionnalités accessibles aux utilisateurs, telles que la consultation de la météo, la visualisation des lignes de bus, l'accès aux détails des lignes et l'analyse des statistiques.
@@ -126,7 +137,7 @@ La nouvelle architecture permet d’obtenir plusieurs améliorations notables :
 
 ---
 
-![POC](./images/amelioration.png)
+![Amelioration](./images/tous_les_bus.png)
 
 
 ## Intégration du service de prédiction des retards
