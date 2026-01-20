@@ -1,0 +1,934 @@
+\documentclass[11pt]{article}
+
+% -------------------- Packages --------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[section]{placeins}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+
+
+\geometry{margin=2.5cm}
+\hypersetup{
+colorlinks=true,
+linkcolor=black,
+urlcolor=blue,
+citecolor=black
+}
+
+% -------------------- Listings styles --------------------
+\lstdefinestyle{code}{
+basicstyle=\ttfamily\small,
+frame=single,
+breaklines=true,
+columns=fullflexible,
+showstringspaces=false
+}
+
+\definecolor{tsbg}{rgb}{0.97,0.97,0.97}
+\definecolor{tskw}{rgb}{0.13,0.13,0.60}
+\definecolor{tsstr}{rgb}{0.00,0.45,0.00}
+\definecolor{tscom}{rgb}{0.45,0.45,0.45}
+\definecolor{tsnum}{rgb}{0.55,0.20,0.00}
+
+\lstdefinelanguage{TypeScript}{
+morekeywords={
+break, case, catch, class, const, continue, debugger, default, delete, do, else,
+enum, export, extends, false, finally, for, function, if, import, in, instanceof,
+new, null, return, super, switch, this, throw, true, try, typeof, var, void, while, with,
+as, implements, interface, let, package, private, protected, public, static, yield,
+any, boolean, constructor, declare, get, module, require, number, set, string, symbol, type,
+from, of, keyof, readonly, namespace, abstract, unknown, never
+},
+sensitive=true,
+morecomment=[l]{//},
+morecomment=[s]{/*}{*/},
+morestring=[b]",
+morestring=[b]'
+}
+
+\lstdefinestyle{typescript}{
+language=TypeScript,
+backgroundcolor=\color{tsbg},
+basicstyle=\ttfamily\small,
+keywordstyle=\color{tskw}\bfseries,
+stringstyle=\color{tsstr},
+commentstyle=\color{tscom}\itshape,
+numberstyle=\tiny\color{tscom},
+numbers=left,
+stepnumber=1,
+numbersep=8pt,
+frame=single,
+framerule=0.4pt,
+rulecolor=\color{tscom},
+breaklines=true,
+breakatwhitespace=true,
+columns=fullflexible,
+showstringspaces=false,
+tabsize=2
+}
+
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\definecolor{codekw}{rgb}{0.13,0.13,0.60}
+\definecolor{codestr}{rgb}{0.00,0.45,0.00}
+\definecolor{codecom}{rgb}{0.45,0.45,0.45}
+\definecolor{codenb}{rgb}{0.55,0.20,0.00}
+
+\lstdefinestyle{python}{
+language=Python,
+backgroundcolor=\color{codebg},
+basicstyle=\ttfamily\small,
+keywordstyle=\color{codekw}\bfseries,
+stringstyle=\color{codestr},
+commentstyle=\color{codecom}\itshape,
+numberstyle=\tiny\color{codecom},
+numbers=left,
+stepnumber=1,
+numbersep=8pt,
+frame=single,
+framerule=0.4pt,
+rulecolor=\color{codecom},
+breaklines=true,
+breakatwhitespace=true,
+columns=fullflexible,
+showstringspaces=false,
+tabsize=2
+}
+
+\title{Rapport TZ}
+\author{Clément Martins}
+\date{Janvier 2026}
+
+\begin{document}
+\begin{titlepage}
+\thispagestyle{empty}
+
+
+\begin{center}
+
+{\Large \textbf{Université Technologique de Compiegne}}\\[0.3cm]
+{\large Génie Informatique}\\
+\vspace{1.5cm}
+
+{\Huge \textbf{Rapport TZ}}\\[0.5cm]
+{\LARGE Visualisation et analyse du réseau de transport urbain de Toronto}\\
+\includegraphics[height=8cm]{images/UTC.png}
+
+
+\begin{flushleft}
+\textbf{Encadrants :}\\
+\quad ALAYA Elmokhtar\\
+\quad BOUZEBDA Salim\\
+\vspace{0.8cm}
+
+\textbf{TZ associé :}\\
+\quad Alexandre Bidaux\\
+\vspace{0.8cm}
+
+\textbf{Étudiant :}\\
+\quad Clément Martins\\
+\vspace{0.8cm}
+
+\textbf{Semestre :}\\
+\quad GI5 -- Automne 2025
+\end{flushleft}
+
+\vfill
+
+{\large Année universitaire 2025--2026}
+
+\end{center}
+
+\end{titlepage}
+
+% =========================================================
+
+\pagestyle{fancy}
+\fancyhf{}
+% En-tête
+\fancyhead[L]{Toronto Bus Prediction}
+\fancyhead[C]{Rapport TZ}
+\fancyhead[R]{Clément Martins}
+
+% Pied de page
+\fancyfoot[R]{%
+\includegraphics[height=2cm]{images/UTC.png}
+}
+\fancyfoot[C]{\thepage}
+
+
+\newpage
+
+\section{Introduction}
+
+Ce projet vise à concevoir une application permettant de visualiser l’état actuel du réseau de transport urbain, de consulter les conditions météorologiques en temps réel, ainsi que d’analyser des statistiques globales et spécifiques à chaque ligne. L’interface principale repose sur une carte interactive affichant les lignes, les arrêts et des informations dynamiques liées au trafic et aux perturbations.
+
+L’objectif est d’offrir une vision claire, synthétique et contextualisée du réseau afin d’aider les usagers à anticiper leurs déplacements.
+
+\newline
+Ce projet à été réaliser en étroite collaboration avec \textbf{Alexandre Bidaux} qui a modélisé en entrainé le systeme prédictif.
+\subsection{Objectifs fonctionnels}
+
+L’application doit permettre à l’utilisateur de :
+\begin{itemize}
+\item Consulter la météo actuelle sur la zone géographique concernée, incluant les conditions, la température et un indicateur visuel représentatif.
+\item Visualiser les lignes de bus sur une carte interactive, accompagnées de l’ensemble des arrêts et d’un indicateur d’état (trafic fluide, perturbé ou interrompu).
+\item Accéder aux informations détaillées d’une ligne, telles que les incidents en cours, les incidents historiques, ainsi que des prévisions de perturbations lorsqu’elles sont disponibles.
+\item Analyser des statistiques globales du réseau, mettant en évidence les lignes les plus impactées, le niveau global de perturbation et les tendances temporelles.
+\end{itemize}
+
+\subsection{Définition des fonctionnalités et de leurs priorités}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Fonctionnalité} & \textbf{Priorité} \\
+\midrule
+Carte interactive des lignes et arrêts & 1 \\
+Prédiction de retards & 2 \\
+Statistiques réseau et par ligne & 3 \\
+Météo actuelle & 4 \\
+État du trafic et incidents & 5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\FloatBarrier
+
+% =========================================================
+\section{Diagramme de cas d’utilisation}
+
+Pour représenter les interactions entre les utilisateurs et le système, un diagramme de cas d’utilisation a été élaboré. Ce diagramme illustre les principales fonctionnalités accessibles aux utilisateurs, telles que la consultation de la météo, la visualisation des lignes de bus, l’accès aux détails des lignes et l’analyse des statistiques.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{./images/DCU.png}
+\caption{Diagramme de cas d’utilisation}
+\end{figure}
+
+\FloatBarrier
+
+% =========================================================
+\section{Diagramme de classes}
+
+Le diagramme de classes ci-dessous présente la structure de notre back-end, mettant en évidence les principales entités, leurs attributs et les relations entre elles. Ce diagramme est essentiel pour comprendre comment les données sont organisées et gérées au sein de l’application.
+
+Il constituera la base de nos appels API et de la gestion des données. Cette partie est cruciale pour assurer une architecture solide et évolutive de notre application. Elle a été discutée et validée avec Alexandre Bidaux avant de commencer le développement afin de se mettre d’accord sur la communication entre nos deux TX.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{./images/DC.png}
+\caption{Diagramme de classes}
+\end{figure}
+
+On peut ainsi générer à partir de ce schéma notre API RESTful avec les routes suivantes :
+
+\url{https://editor.swagger.io}
+
+avec le fichier:
+\href{https://gitlab.utc.fr/clmartin/pr_subway_martins_bidaux/-/blob/bc90d1a7d3452fae124b93b6bbbc84d5598b8822/app/report/APIREST.yaml}{APIRET.yaml}
+
+\FloatBarrier
+
+% =========================================================
+\section{Proof of Concept}
+
+Avant de s’engager dans la mise en œuvre complète du système, un Proof of Concept (PoC) a été réalisé afin de vérifier la cohérence des choix techniques et la faisabilité des fonctionnalités clés. L’objectif n’était pas de proposer une version exhaustive de l’application, mais de valider étape par étape les principaux éléments qui constituent son cœur fonctionnel.
+
+Le PoC a tout d’abord permis de tester l’intégration d’une carte interactive basée sur \textbf{Mapbox GL JS}, affichée au sein d’une application front-end développée avec \textbf{React}. Nous avons vérifié la possibilité de représenter dynamiquement des lignes de bus sous forme de tracés géographiques, ainsi que d’ajouter des points d’intérêt tels que les arrêts. Ce premier jalon a servi à confirmer la compatibilité entre les données de coordonnées, la logique de rendu en temps réel et les contraintes de performance liées au navigateur.
+
+De plus, Mapbox GL offre une grande flexibilité en termes de personnalisation visuelle, ce qui a permis d’adapter l’apparence de la carte aux besoins spécifiques du projet, notamment en termes de styles et de couches d’information supplémentaires. Il est aussi possible d’intégrer \textbf{des effets visuels avancés} (pluie et neige) sur la carte et d’y inclure \textbf{Three.js} pour, à terme, intégrer une visualisation en temps réel des bus en 3D.
+
+La carte personnalisée est accessible ici :
+
+\href{https://api.mapbox.com/styles/v1/clementmartins/cmh0o7rch000e01s7g2psbnz8.html?title=view&access_token=pk.eyJ1IjoiY2xlbWVudG1hcnRpbnMiLCJhIjoiY21oMGx4cHAxMDI4bDJuczhnb2N0NHd2ZSJ9.vzFXf89w1P83cru30twuAA&zoomwheel=true&fresh=true#0/0/0}{Mapbox carte}
+
+Elle a été réalisée de façon à faire ressortir les routes et à mettre en avant les lignes de bus.
+
+Parallèlement, une première couche de back-end a été mise en place à l’aide de Node.js et Express, structurée de manière à évoluer vers une architecture en microservices. Une attention particulière a été portée à l’isolation des clés d’API et des paramètres sensibles via un fichier \texttt{.env}, afin de garantir une configuration modulaire et sécurisée.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{./images/POC.png}
+\caption{Proof of Concept}
+\end{figure}
+
+\FloatBarrier
+
+% =========================================================
+\section{Architecture générale du système}
+
+Le système repose sur une architecture en trois couches distinctes et complémentaires, permettant une séparation claire des responsabilités et facilitant la maintenance ainsi que l’évolutivité de l’application.
+
+\subsection{Vue d’ensemble de l’architecture}
+
+L’architecture globale peut être décomposée en trois composantes principales :
+\begin{enumerate}
+\item \textbf{Frontend (React + Mapbox GL)} : interface utilisateur interactive permettant la visualisation cartographique des lignes de bus, des arrêts et des statistiques associées. Le frontend communique exclusivement avec le backend via des endpoints REST et ne sollicite jamais directement les services externes.
+\item \textbf{Backend (Node.js + Express + TypeScript)} : couche applicative centrale orchestrant l’ensemble des services. Elle expose une API REST structurée, gère la logique métier, effectue les appels aux services externes (prédiction, météo) et assure la mise en cache des données pour optimiser les performances. Le backend sert également les données GTFS prétraitées sous forme de JSON normalisé.
+\item \textbf{Service de prédiction (Python + Flask + XGBoost)} : microservice autonome dédié à l’inférence de retards potentiels. Il encapsule le modèle de Machine Learning entraîné et expose un endpoint de prédiction indépendant, permettant ainsi de déployer et de scaler ce service sans impacter le reste de l’application.
+\end{enumerate}
+
+\subsection{Flux de données}
+
+Le schéma de communication entre les différentes couches suit un modèle de requête-réponse synchrone :
+\begin{itemize}
+\item l’utilisateur interagit avec l’interface graphique (sélection de lignes, consultation des statistiques) ;
+\item le frontend transmet les requêtes au backend via HTTP ;
+\item le backend interroge le service de prédiction Python lorsqu’une estimation de retard est demandée ;
+\item le backend récupère également les données météorologiques actuelles depuis l’API Meteosource, avec mise en cache pour limiter les appels répétés ;
+\item les réponses remontent jusqu’à l’interface utilisateur, où elles sont présentées de manière claire et structurée.
+\end{itemize}
+
+\subsection{Avantages de cette approche}
+
+Cette séparation en couches offre plusieurs avantages notables :
+\begin{itemize}
+\item \textbf{Modularité} : chaque composant peut évoluer indépendamment.
+\item \textbf{Scalabilité} : les services peuvent être répliqués ou déployés sur des infrastructures distinctes selon les besoins en charge.
+\item \textbf{Maintenabilité} : les responsabilités étant claires, la maintenance et le débogage sont facilités.
+\item \textbf{Testabilité} : chaque couche peut être testée unitairement sans dépendance forte aux autres.
+\end{itemize}
+
+\FloatBarrier
+
+% =========================================================
+\section{Création des routes avec les données GTFS}
+
+La construction des routes exploitables pour la visualisation cartographique constitue l’une des étapes les plus critiques du projet. Elle repose sur l’exploitation des données de transport au format GTFS (General Transit Feed Specification), standard international largement adopté par les agences de transport urbain.
+
+\subsection{Présentation du format GTFS}
+
+Le format GTFS est un ensemble de fichiers texte structurés au format CSV, décrivant les lignes, les arrêts, les horaires et les itinéraires des transports en commun. Chaque fichier contient des informations spécifiques, liées entre elles par des identifiants uniques.
+
+Les principaux fichiers exploités dans ce projet sont :
+\begin{itemize}
+\item \textbf{routes.txt} : décrit les lignes de transport. Chaque ligne possède un identifiant unique (\texttt{route\_id}), un nom court (\texttt{route\_short\_name}), un nom long (\texttt{route\_long\_name}), une couleur associée (\texttt{route\_color}) et un type de transport (\texttt{route\_type}). Pour les bus, le type est \texttt{3}.
+\item \textbf{trips.txt} : définit les trajets (\textit{trips}) effectués par les véhicules. Un trip représente un parcours spécifique d’une ligne, à un moment donné. Ce fichier contient notamment \texttt{trip\_id}, \texttt{route\_id}, \texttt{shape\_id} (référence à la géométrie du trajet) et \texttt{direction\_id} (aller/retour).
+\item \textbf{stop\_times.txt} : associe chaque trip à une séquence d’arrêts ordonnés. Les colonnes principales sont \texttt{trip\_id}, \texttt{stop\_id} et \texttt{stop\_sequence}. Ce fichier permet de reconstituer l’ordre des arrêts pour chaque trajet.
+\item \textbf{stops.txt} : contient les informations géographiques et descriptives des arrêts (\texttt{stop\_id}, \texttt{stop\_name}, \texttt{stop\_lat}, \texttt{stop\_lon}).
+\item \textbf{shapes.txt} (optionnel) : fournit la géométrie précise des itinéraires sous forme de séquences de points (\texttt{shape\_id}, \texttt{shape\_pt\_lat}, \texttt{shape\_pt\_lon}, \texttt{shape\_pt\_sequence}).
+\item \textbf{calendar.txt / calendar\_dates.txt} : définissent les jours de service pour chaque trip (non utilisés directement dans notre pipeline de construction de routes, mais essentiels pour les horaires).
+\end{itemize}
+
+\subsection{Pipeline complet de construction des routes}
+
+Le processus de construction des routes s’articule en plusieurs étapes successives, réalisées principalement dans le script Python \texttt{BusStops.py}.
+
+\subsubsection{Étape 1 : filtrage des lignes autorisées}
+
+Afin de limiter le volume de données et de ne traiter que les lignes pertinentes (par exemple, celles effectivement desservies par l’agence TTC à Toronto), un fichier de configuration \texttt{lignes\_bus.json} liste les identifiants de routes autorisés. Ces lignes correspondent aux lignes pouvant être prédites par notre système prédictif.
+
+\begin{lstlisting}[style=python,language=Python]
+allowed_route_ids = load_allowed_route_ids("../res/extract/lignes_bus.json")
+\end{lstlisting}
+
+\subsubsection{Étape 2 : lecture et enrichissement des métadonnées de lignes}
+
+Le fichier \texttt{routes.txt} est lu ligne par ligne. Pour chaque ligne autorisée, les informations descriptives (nom, couleur, nom long) sont extraites et stockées.
+
+\begin{lstlisting}[style=python,language=Python]
+with routes_path.open("r", encoding="utf-8-sig", newline="") as f:
+r = csv.DictReader(f)
+for row in r:
+route_id = row.get("route_id").strip()
+if route_id not in allowed_route_ids:
+continue
+route_info[route_id] = {
+"id": int(route_id),
+"nom": row.get("route_short_name").strip(),
+"long_nom": row.get("route_long_name").strip(),
+"couleur": row.get("route_color").strip(),
+}
+\end{lstlisting}
+
+\subsubsection{Étape 3 : canonicalisation des arrêts}
+
+Un problème récurrent dans les données GTFS est la duplication d’arrêts physiquement identiques mais possédant des identifiants distincts. Pour corriger ce problème, une étape de canonicalisation est appliquée : tous les arrêts partageant les mêmes coordonnées GPS (latitude/longitude) sont regroupés sous un identifiant canonique unique.
+
+\begin{lstlisting}[style=python,language=Python]
+coord_to_ids: dict[tuple[float, float], list[str]] = defaultdict(list)
+
+with stops_path.open("r", encoding="utf-8-sig", newline="") as f:
+r = csv.DictReader(f)
+for row in r:
+stop_id = row.get("stop_id").strip()
+lat = float(row.get("stop_lat").strip())
+lon = float(row.get("stop_lon").strip())
+coord_to_ids[(lat, lon)].append(stop_id)
+
+coord_to_canon = {c: sorted(ids, key=stop_sort_key)[0] for c, ids in coord_to_ids.items()}
+stop_to_canon = {sid: coord_to_canon[(lat, lon)] for sid, (lat, lon) in stop_coords.items()}
+\end{lstlisting}
+
+\subsubsection{Étape 4 : association des trips aux lignes}
+
+Le fichier \texttt{trips.txt} est parcouru pour identifier tous les trips associés à chaque ligne et récupérer les \texttt{shape\_id} éventuels.
+
+\begin{lstlisting}[style=python,language=Python]
+route_to_trips: dict[str, set[str]] = defaultdict(set)
+trip_to_shape: dict[str, str] = {}
+
+with trips_path.open("r", encoding="utf-8-sig", newline="") as f:
+r = csv.DictReader(f)
+for row in r:
+route_id = row.get("route_id").strip()
+if route_id not in route_ids:
+continue
+trip_id = row.get("trip_id").strip()
+route_to_trips[route_id].add(trip_id)
+
+        shape_id = row.get("shape_id").strip()
+        if shape_id:
+            trip_to_shape[trip_id] = shape_id
+\end{lstlisting}
+
+\subsubsection{Étape 5 : reconstitution de l’ordre des arrêts par trip}
+
+\texttt{stop\_times.txt} fournit pour chaque trip la liste des arrêts et l’ordre de passage (\texttt{stop\_sequence}). Les arrêts sont convertis en identifiants canoniques.
+
+\begin{lstlisting}[style=python,language=Python]
+trip_to_seq: dict[str, list[tuple[int, str]]] = defaultdict(list)
+
+with stop_times_path.open("r", encoding="utf-8-sig", newline="") as f:
+r = csv.DictReader(f)
+for row in r:
+trip_id = row.get("trip_id").strip()
+if trip_id not in trip_to_route:
+continue
+stop_id = row.get("stop_id").strip()
+seq = int(row.get("stop_sequence").strip())
+
+        canon_stop = stop_to_canon.get(stop_id, stop_id)
+        trip_to_seq[trip_id].append((seq, canon_stop))
+\end{lstlisting}
+
+\subsubsection{Étape 6 : chargement des géométries (shapes)}
+
+Si \texttt{shapes.txt} est présent, il est lu et les points sont triés selon \texttt{shape\_pt\_sequence}.
+
+\begin{lstlisting}[style=python,language=Python]
+shape_points: dict[str, list[tuple[int, float, float]]] = defaultdict(list)
+
+if has_shapes:
+with shapes_path.open("r", encoding="utf-8-sig", newline="") as f:
+r = csv.DictReader(f)
+for row in r:
+shape_id = row.get("shape_id").strip()
+lat = float(row.get("shape_pt_lat").strip())
+lon = float(row.get("shape_pt_lon").strip())
+seq = int(row.get("shape_pt_sequence").strip())
+shape_points[shape_id].append((seq, lon, lat))
+
+    for sid, pts in shape_points.items():
+        pts.sort(key=lambda x: x[0])
+\end{lstlisting}
+
+\subsection{Regroupement des arrêts et déduplication}
+
+La canonicalisation des arrêts repose sur leurs coordonnées GPS. Elle garantit qu’un même arrêt physique n’apparaît qu’une seule fois dans le modèle final, même s’il est référencé par plusieurs identifiants dans les données source.
+
+Cette approche présente plusieurs avantages :
+\begin{itemize}
+\item \textbf{Cohérence spatiale} : les arrêts situés au même endroit sont fusionnés, évitant les duplications visuelles sur la carte.
+\item \textbf{Simplification des requêtes} : les requêtes portant sur les arrêts deviennent plus simples et plus performantes.
+\item \textbf{Réduction de la taille des données} : le fichier JSON final contient moins d’arrêts redondants.
+\end{itemize}
+
+Lorsqu’un arrêt est utilisé par plusieurs lignes, il apparaît dans les données de chaque ligne concernée, mais conserve un identifiant canonique unique, facilitant les jointures et les analyses croisées.
+
+\subsection{Tri par « route la plus longue »}
+
+Pour chaque ligne, plusieurs trips peuvent exister. Afin de sélectionner un trajet représentatif et complet, une heuristique basée sur le nombre d’arrêts est appliquée : le trip comportant le plus grand nombre d’arrêts distincts est retenu comme référence.
+
+\begin{lstlisting}[style=python,language=Python]
+for rid in route_ids:
+trips = route_to_trips.get(rid, set())
+best_trip_id = None
+best_ordered: list[str] = []
+best_len = -1
+
+    for tid in trips:
+        pairs = trip_to_seq.get(tid, [])
+        pairs_sorted = sorted(pairs, key=lambda x: x[0])
+
+        ordered: list[str] = []
+        last = None
+        for _, stop_canon in pairs_sorted:
+            if stop_canon != last:
+                ordered.append(stop_canon)
+                last = stop_canon
+
+        if len(ordered) > best_len:
+            best_len = len(ordered)
+            best_trip_id = tid
+            best_ordered = ordered
+\end{lstlisting}
+
+Cette méthode sélectionne automatiquement un parcours représentatif sans configuration manuelle. Elle pourrait être enrichie en intégrant un critère de distance géographique cumulée (par exemple via la formule de Haversine), ou la fréquence de desserte du trip.
+
+\subsection{Gestion des variantes et branches}
+
+Une même ligne peut présenter plusieurs variantes (trajets courts, détours temporaires, dessertes spécifiques). Le choix du trip « le plus long » capture généralement le parcours le plus complet. Les variantes non retenues peuvent être exploitées ultérieurement (affichage multi-itinéraires, analyses comparatives). Dans le cadre de ce projet, seule la variante principale est conservée afin de simplifier l’affichage et de garantir une meilleure lisibilité.
+
+Il est également possible de distinguer explicitement les directions (aller/retour) en exploitant \texttt{direction\_id}. Dans l’implémentation actuelle, cette distinction n’est pas appliquée : le trip sélectionné peut correspondre à l’une ou l’autre direction. Une amélioration consisterait à sélectionner deux trips distincts (un par direction) et à les représenter séparément ou via une structure unique contenant deux listes d’arrêts.
+
+\subsection{Production d’un GeoJSON final pour Mapbox}
+
+Une fois les arrêts et les géométries sélectionnés, les données sont structurées au format JSON. Deux fichiers principaux sont générés :
+\begin{itemize}
+\item \textbf{lines\_normalized.json} : métadonnées de chaque ligne (identifiant, nom, couleur, liste d’arrêts, géométrie).
+\item \textbf{stops\_normalized.json} : arrêts uniques avec coordonnées GPS et nom.
+\end{itemize}
+
+Exemple de format pour une ligne :
+\begin{lstlisting}[style=python]
+{
+"id": 48,
+"nom": "48",
+"couleur": "FF0000",
+"long_nom": "Rathburn",
+"stopIds": [4501, 4502, 4503],
+"geometries": [[lon1, lat1], [lon2, lat2]]
+}
+\end{lstlisting}
+
+Exemple de format pour un arrêt :
+\begin{lstlisting}[style=python]
+{
+"id": 4501,
+"nom": "Rathburn at Islington",
+"position": { "lat": 43.6529, "long": -79.5432 }
+}
+\end{lstlisting}
+
+Ces structures sont ensuite converties côté frontend en \texttt{FeatureCollection} GeoJSON (LineString pour les lignes et Points pour les arrêts) afin d’être affichées par Mapbox GL.
+
+\subsection{Exposition via l’API REST}
+
+Le backend Node.js expose plusieurs endpoints pour accéder aux données des lignes et des arrêts.
+
+\textbf{GET /lines} : retourne la liste des lignes disponibles.
+\begin{lstlisting}[style=typescript,language=TypeScript]
+router.get("/", async (_, res) => {
+res.json(await getAllLines());
+});
+\end{lstlisting}
+
+\textbf{GET /lines/:id} : retourne le détail complet d’une ligne.
+\begin{lstlisting}[style=typescript,language=TypeScript]
+router.get("/:id", async (req, res) => {
+res.json(await getLineDetails(req.params.id));
+});
+\end{lstlisting}
+
+\textbf{POST /lines/bulk} : retourne en une requête les détails de plusieurs arrêts.
+\begin{lstlisting}[style=typescript,language=TypeScript]
+router.post("/bulk", async (req, res) => {
+res.json(await getStopsBulk(req.body.ids));
+});
+\end{lstlisting}
+
+\subsection{Choix techniques et limites du traitement GTFS}
+
+\subsubsection{Choix techniques}
+\begin{itemize}
+\item \textbf{Canonicalisation par coordonnées GPS} : efficace pour éliminer les doublons, mais dépend de la précision des coordonnées.
+\item \textbf{Sélection du trip le plus long} : pragmatique et robuste, mais ne prend pas en compte la fréquence ni la représentativité temporelle.
+\item \textbf{Utilisation de shapes.txt} : assure un tracé réaliste ; en son absence, un tracé approximatif par segments entre arrêts serait possible mais moins pertinent.
+\end{itemize}
+
+\subsubsection{Limites}
+\begin{itemize}
+\item \textbf{Qualité variable des données GTFS} : incohérences possibles (séquences erronées, arrêts manquants).
+\item \textbf{Shapes absentes/incomplètes} : limitation de la précision du tracé.
+\item \textbf{Gestion simplifiée des variantes} : un unique itinéraire principal est retenu.
+\item \textbf{Absence de gestion explicite des directions} : aller/retour non distingués dans l’implémentation actuelle.
+\item \textbf{Arrêts communs à plusieurs lignes} : information non exploitée directement dans l’interface.
+\end{itemize}
+
+\subsection{Optimisations du pipeline GTFS}
+
+Le traitement GTFS est exécuté en amont, lors de la phase de préparation des données. Les résultats sont stockés sous forme de fichiers JSON lus par le backend au démarrage. Cette approche permet :
+\begin{itemize}
+\item des temps de réponse optimisés côté API ;
+\item une réduction de la charge CPU (pas de recalcul à la demande) ;
+\item une meilleure scalabilité, avec possibilité de servir ces fichiers via un CDN.
+\end{itemize}
+
+\FloatBarrier
+
+% =========================================================
+\section{Amélioration du rendu et des performances}
+
+L’amélioration des performances de l’application cartographique a constitué un axe de travail majeur du projet. L’objectif n’était pas uniquement de rendre l’interface plus fluide, mais surtout de mettre en place une architecture plus cohérente et plus adaptée aux contraintes du rendu cartographique WebGL, tout en conservant les avantages offerts par React pour la gestion de l’interface et de l’état applicatif.
+
+\subsection{Analyse de la problématique initiale}
+
+Dans la version initiale de l’application, chaque ligne de bus ainsi que chaque arrêt étaient gérés de manière indépendante. Concrètement, cela se traduisait par la création d’une source et d’un layer Mapbox pour chaque ligne, et souvent d’un autre couple source/layer pour les arrêts associés. À cette structure s’ajoutait un composant React dédié par ligne, chargé d’instancier ces éléments graphiques.
+
+Cette approche, bien que conceptuellement simple et proche du paradigme déclaratif de React, s’est révélée inadaptée aux contraintes de Mapbox GL. La multiplication des sources et des layers entraînait une surcharge importante du GPU et du CPU, provoquant des ralentissements notables lors du zoom, du déplacement de la carte ou encore lors de la sélection simultanée de plusieurs lignes.
+
+De plus, la synchronisation fine entre le cycle de rendu de React et les opérations impératives de Mapbox (ajout et suppression de layers) augmentait la complexité du code et rendait l’application plus difficile à maintenir et à faire évoluer.
+
+\subsection{Principe de refonte retenu}
+
+Afin de corriger ces problèmes, une séparation plus nette des responsabilités entre React et Mapbox GL a été mise en place :
+\begin{itemize}
+\item React est utilisé pour la gestion de l’état applicatif, la logique métier et l’interface utilisateur.
+\item Mapbox GL est responsable exclusivement du rendu graphique et de l’affichage des données géographiques.
+\end{itemize}
+
+\subsection{Mutualisation des sources et des layers}
+
+L’amélioration la plus significative concerne la mutualisation :
+\begin{itemize}
+\item une unique source GeoJSON regroupe l’ensemble des lignes de bus ;
+\item un seul layer \texttt{line} affiche toutes les lignes ;
+\item une seconde source GeoJSON regroupe l’ensemble des arrêts ;
+\item un unique layer \texttt{circle} affiche tous les arrêts.
+\end{itemize}
+
+\subsection{Mise à jour des données via les sources existantes}
+
+Plutôt que de créer et détruire dynamiquement des layers à chaque interaction utilisateur, les mises à jour s’effectuent via \texttt{setData} sur les sources GeoJSON existantes. Lorsqu’un utilisateur sélectionne ou désélectionne une ligne :
+\begin{itemize}
+\item les données GeoJSON correspondantes sont reconstruites côté React ;
+\item les sources Mapbox existantes sont mises à jour ;
+\item Mapbox actualise automatiquement le rendu.
+\end{itemize}
+
+\subsection{Gestion fiable et performante des sélections}
+
+La gestion des lignes sélectionnées repose sur des identifiants uniques stockés dans un \texttt{Set<string>}. Ce choix évite les problèmes de comparaisons par référence d’objets JavaScript et garantit des opérations rapides et fiables.
+
+\subsection{Allègement du cycle de rendu React}
+
+Les éléments visuels lourds (lignes et arrêts) ne sont plus liés au cycle de rendu des composants React. React se limite à mettre à jour l’état et déclencher les reconstructions de données, tandis que Mapbox GL gère l’affichage.
+
+\subsection{Résultats et bénéfices observés}
+
+La nouvelle architecture permet :
+\begin{itemize}
+\item une fluidité accrue lors de la navigation sur la carte ;
+\item une réduction significative de la charge GPU et CPU ;
+\item une meilleure lisibilité et maintenabilité du code ;
+\item une base solide pour des optimisations futures (LOD, simplification géométrique, chargement à la demande).
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{./images/tous_les_bus.png}
+\caption{Amélioration du rendu : affichage simultané des lignes}
+\end{figure}
+
+\FloatBarrier
+
+% =========================================================
+\section{Intégration du service de prédiction des retards}
+
+L’un des objectifs majeurs du projet était de permettre aux usagers d’anticiper les perturbations sur le réseau de transport. Pour répondre à cette problématique, un système de prédiction des retards a été développé et intégré à l’application.
+
+\subsection{Architecture du système de prédiction}
+
+Le système repose sur une architecture en trois couches :
+\begin{enumerate}
+\item \textbf{Modèle de Machine Learning} : un modèle XGBoost entraîné sur des données historiques combinant informations météorologiques, temporelles et incidents passés.
+\item \textbf{API de prédiction Python (Flask)} : un service REST exposant le modèle via des endpoints HTTP afin d’obtenir des prédictions en temps réel.
+\item \textbf{Intégration Front-end et Back-end} : une couche TypeScript orchestrant les appels au service de prédiction et présentant les résultats à l’utilisateur.
+\end{enumerate}
+
+\subsection{Modèle de prédiction simplifié}
+
+Le modèle a été optimisé pour concilier performance et simplicité :
+\begin{itemize}
+\item \textbf{Encodage cyclique} des variables temporelles (heure, jour de la semaine, mois, direction du vent).
+\item \textbf{Transformation des variables météorologiques} : regroupement des conditions similaires, binarisation des précipitations, catégorisation de la visibilité.
+\item \textbf{Prétraitement standardisé} via un pipeline scikit-learn sauvegardé.
+\end{itemize}
+
+\subsection{API de prédiction}
+
+L’API Flask (\texttt{app.py}) expose :
+\begin{itemize}
+\item \textbf{POST \,/predict} : accepte des données météorologiques et temporelles et retourne une estimation du retard en minutes.
+\end{itemize}
+
+L’API utilise CORS pour permettre les appels depuis le front-end et inclut une validation des données d’entrée afin de garantir la fiabilité des prédictions.
+
+\subsection{Intégration Backend (TypeScript/Node.js)}
+
+Le backend TypeScript fait office d’intermédiaire entre le front-end et le service Python :
+\begin{itemize}
+\item \textbf{predictionService.ts} : communication avec l’API Flask (gestion d’erreurs et vérification de santé).
+\item \textbf{busRoutes.ts} : endpoint \texttt{POST /lines/:id/prediction/:incident}.
+\item \textbf{busService.ts} : intégration des appels de prédiction dans la logique métier.
+\end{itemize}
+
+L’URL de l’API de prédiction est configurable via \texttt{PREDICTION\_API\_URL}.
+
+\subsection{Intégration Frontend (React)}
+
+Les prédictions sont intégrées dans le panneau de statistiques :
+\begin{itemize}
+\item \textbf{PredictionService.tsx} : encapsule les appels API vers le backend.
+\item \textbf{StatsPanel.tsx} : charge les prédictions lors de la sélection d’une ligne et affiche le retard prédit.
+\item \textbf{StatsPanel.module.css} : section dédiée pour l’affichage (badge, bordures arrondies).
+\end{itemize}
+
+\subsection{Flux de données}
+
+\begin{enumerate}
+\item L’utilisateur sélectionne une ou plusieurs lignes de bus sur la carte.
+\item Le frontend récupère les données météorologiques actuelles.
+\item Pour chaque ligne sélectionnée, un appel API est effectué vers le backend.
+\item Le backend transmet la requête au service Python de prédiction.
+\item Le modèle XGBoost génère une prédiction.
+\item Le résultat remonte jusqu’au frontend.
+\item Les prédictions sont affichées dans le panneau de statistiques.
+\end{enumerate}
+
+\FloatBarrier
+
+% =========================================================
+\section{Guide d’utilisation}
+
+\subsection{Démarrage de l’application complète}
+
+Pour bénéficier des prédictions de retard, l’application nécessite le démarrage de trois services.
+
+\subsubsection*{1. Service de prédiction Python}
+\begin{lstlisting}[style=code]
+cd models
+pip install -r requirements.txt
+python app.py
+\end{lstlisting}
+Le service démarre par défaut sur \texttt{http://localhost:5000}.
+
+\subsubsection*{2. Backend Node.js}
+\begin{lstlisting}[style=code]
+cd app/backend
+npm install
+npm start
+\end{lstlisting}
+Le backend démarre sur le port 3000 et communique avec le service de prédiction.
+
+\subsubsection*{3. Frontend React}
+\begin{lstlisting}[style=code]
+cd app/frontend
+npm install
+npm run dev
+\end{lstlisting}
+
+L’interface utilisateur est accessible sur \texttt{http://localhost:5173}, à condition de spécifier les tokens nécessaires dans les fichiers \texttt{.env} de chaque module :
+\begin{itemize}
+\item Frontend : \texttt{VITE\_MAPBOX\_ACCESS\_TOKEN} et \texttt{VITE\_API\_BASE\_URL}
+\item Backend : \texttt{MAPBOX\_ACCESS\_TOKEN}, \texttt{PORT}, \texttt{PREDICTION\_API\_URL}, \texttt{BASELINE\_LINE\_FOR\_PREDICTIONS}, \texttt{WEATHER\_API\_URL}, \texttt{WEATHER\_API\_KEY}
+\end{itemize}
+
+\subsection{Utilisation de la fonctionnalité de prédiction}
+
+\begin{enumerate}
+\item Ouvrez l’application dans votre navigateur.
+\item Sur la carte interactive, sélectionnez une ou plusieurs lignes de bus en utilisant le panneau latéral gauche.
+\item Le panneau de statistiques à droite affiche automatiquement :
+\begin{itemize}
+\item les statistiques globales du réseau ;
+\item les prédictions par type d’incident ;
+\item \textbf{les retards prédits en minutes pour chaque ligne sélectionnée}.
+\end{itemize}
+\end{enumerate}
+
+Les prédictions sont calculées en temps réel en tenant compte des conditions météorologiques actuelles et de l’heure de la journée.
+
+\FloatBarrier
+
+% =========================================================
+\section{Intégration du service de données météorologiques}
+
+Pour améliorer la précision et la fiabilité du système de prédiction, un service majeur a été développé :
+\begin{itemize}
+\item \textbf{Service de données météorologiques} : fournit des données météorologiques réelles au système prédictif.
+\end{itemize}
+
+\subsection{Architecture du service météorologique}
+
+Le service météorologique repose sur l’API : \url{https://www.meteosource.com/}
+
+\textbf{Backend (\texttt{weatherService.ts})} :
+\begin{itemize}
+\item récupère les données actuelles à Toronto via l’API ;
+\item implémente un système de cache pour optimiser les performances (durée : 1 heure) ;
+\item expose le format de données spécifié par le système prédictif.
+\end{itemize}
+
+\textbf{API REST} :
+\begin{itemize}
+\item \texttt{GET /weather/current} : récupère les conditions météorologiques actuelles.
+\end{itemize}
+
+\textbf{Frontend (\texttt{WeatherService.tsx})} : encapsule les appels API et fournit des méthodes pour récupérer les données météorologiques.
+
+\begin{lstlisting}[style=typescript,language=TypeScript]
+export type WeatherData = {
+TEMP: number;
+DEW_POINT_TEMP: number;
+HUMIDEX: number | null;
+PRECIP_AMOUNT: number;
+RELATIVE_HUMIDITY: number;
+STATION_PRESSURE: number;
+VISIBILITY: number;
+WEATHER_ENG_DESC: string;
+WIND_DIRECTION: number | null;
+WIND_SPEED: number | null;
+LOCAL_DATE: string;
+LOCAL_TIME: string;
+WEEK_DAY: string;
+LOCAL_MONTH: number;
+LOCAL_DAY: number;
+}
+\end{lstlisting}
+
+\subsection{Intégration dans le pipeline de prédiction}
+
+Le service météorologique s’intègre étroitement au système de prédiction. À chaque requête de prédiction pour une ligne donnée, le backend récupère automatiquement les conditions météorologiques via \texttt{/weather/current} et transmet ces données au service Python.
+
+Le format produit par \texttt{weatherService.ts} correspond aux exigences du modèle XGBoost, garantissant la compatibilité et évitant des conversions intermédiaires. Le système de cache (1 heure) limite le nombre d’appels à l’API externe tout en conservant une fraîcheur raisonnable des données.
+
+De plus nour récupérons la description du temps pour afficher sur la carte dynamiquement l'état \textbf{neige} et \textbf{pluie} (voir POC):
+
+\begin{lstlisting}[style=typescript,language=TypeScript]
+if(condition.includes("rain")){
+// @ts-ignore
+map.setRain({
+density: zoomBasedReveal(0.2),
+intensity: 1.0,
+color: '#a8adbc',
+opacity: 0.4,
+direction: [0, 80],
+'droplet-size': [2.6, 18.2],
+'distortion-strength': 0.7,
+'center-thinning': 0
+})
+}else if(condition.includes("snow")){
+// @ts-ignore
+map.setSnow({
+density: zoomBasedReveal(0.4),
+intensity: 1.0,
+'center-thinning': 0.1,
+direction: [0, 50],
+opacity: 1.0,
+color: `#ffffff`,
+'flake-size': 0.71,
+vignette: zoomBasedReveal(0.3),
+'vignette-color': `#ffffff`
+});
+}
+\end{lstlisting}
+
+\FloatBarrier
+
+% =========================================================
+\section{Limites et perspectives}
+
+Bien que l’application ait atteint un niveau fonctionnel satisfaisant et remplisse les objectifs principaux fixés, plusieurs limitations ont été identifiées au cours du développement, ouvrant la voie à des améliorations futures.
+
+\subsection{Limitations rencontrées}
+
+\subsubsection{Impossibilité d’afficher les bus en 3D avec Three.js}
+
+Une fonctionnalité envisagée consistait à intégrer une visualisation tridimensionnelle des bus en temps réel. Cette fonctionnalité s’est heurtée à une contrainte technique majeure : les API publiques disponibles pour le réseau TTC de Toronto ne fournissent pas la position géographique en temps réel des véhicules, mais uniquement des informations de type \textit{temps estimé avant le prochain passage}.
+
+Sans coordonnées GPS, il n’est pas possible de représenter les véhicules sur la carte. Une alternative consisterait à simuler les positions par interpolation, mais produirait des données approximatives.
+
+\textbf{Perspectives} : si l’API TTC évolue vers un flux GTFS-RT exposant des positions GPS, une visualisation 2D/3D en temps réel pourrait être intégrée. Une architecture WebSocket permettrait de diffuser les positions en continu.
+
+\subsubsection{Absence d’étude statistique historique}
+
+Une analyse approfondie des données historiques (corrélations météo/incidents, tendances temporelles) n’a pas été développée par manque de temps.
+
+\textbf{Perspectives} : la mise en place d’une base de données (PostgreSQL/MongoDB) permettrait de stocker incidents, prédictions et météo au fil du temps, et de proposer des tableaux de bord interactifs (Chart.js/D3.js).
+
+\subsection{Limitations techniques et données}
+
+\subsubsection{Qualité et complétude des données GTFS}
+
+Certaines lignes ne disposent pas de \texttt{shapes.txt}, limitant la précision des tracés. Des incohérences d’arrêts (doublons, coordonnées imprécises) nécessitent des traitements correctifs.
+
+\textbf{Perspectives} : correction manuelle ou semi-automatique et reconstruction de géométries via une API de routage (ex. Mapbox Directions utilisé lors du POC), au prix d’un coût API.
+
+\subsubsection{Gestion simplifiée des variantes et directions}
+
+La version actuelle ne distingue pas explicitement aller/retour et variantes horaires.
+
+\textbf{Perspectives} : exploiter \texttt{direction\_id} pour afficher les deux directions, et proposer plusieurs itinéraires représentatifs via un sélecteur.
+
+\subsubsection{Absence de temps réel pour les prédictions}
+
+Les prédictions reposent sur des données historiques et la météo actuelle, sans état réel du trafic.
+
+\textbf{Perspectives} : intégration de données de trafic en temps réel.
+
+\subsection{Perspectives d’extension}
+
+\subsubsection{Internationalisation et support multi-villes}
+
+L’application est conçue pour le réseau TTC de Toronto.
+
+\textbf{Perspectives} : généralisation multi-villes via configuration et sélection de réseau dans l’interface, en consommant différents flux GTFS.
+
+\subsubsection{Optimisations pour les très grands réseaux}
+
+Pour des réseaux de grande taille, des optimisations supplémentaires seraient nécessaires.
+
+\textbf{Perspectives} : clustering spatial des arrêts à faible zoom, chargement progressif des données (lazy loading), simplification géométrique dynamique et adaptation du niveau de détail.
+
+\FloatBarrier
+
+% =========================================================
+\section{Conclusion}
+
+Ce projet a permis de concevoir et de développer une application web complète de visualisation et d’analyse du réseau de transport urbain de Toronto, combinant plusieurs technologies modernes et offrant une expérience utilisateur riche et interactive.
+
+\subsection{Bilan des objectifs atteints}
+
+Les objectifs fonctionnels prioritaires ont été atteints :
+\begin{itemize}
+\item \textbf{Carte interactive} : intégration de Mapbox GL JS avec React, affichage des lignes et des arrêts, et amélioration notable des performances grâce à la mutualisation des sources et layers.
+\item \textbf{Prédiction des retards} : modèle XGBoost exposé via Flask et intégré à l’application via une orchestration backend TypeScript.
+\item \textbf{Statistiques réseau et par ligne} : affichage d’indicateurs globaux et par ligne pour faciliter l’analyse par les usagers.
+\item \textbf{Météo actuelle} : intégration de Meteosource avec cache afin de limiter les appels externes.
+\end{itemize}
+
+\subsection{Apports du projet}
+
+Sur le plan technique, ce projet a permis de mettre en œuvre :
+\begin{itemize}
+\item un pipeline complet de traitement et d’exploitation des données GTFS (lecture, nettoyage, canonicalisation et structuration) ;
+\item une architecture modulaire en services (frontend, backend, microservice de prédiction) ;
+\item des optimisations de rendu cartographique respectant les contraintes WebGL ;
+\item l’intégration d’un modèle de Machine Learning dans une application web via une API dédiée.
+\end{itemize}
+
+\subsection{Perspectives d’évolution}
+
+Les limitations identifiées ouvrent plusieurs axes d’amélioration :
+\begin{itemize}
+\item accès aux positions GPS temps réel pour une visualisation dynamique des bus ;
+\item stockage et analyse des données historiques pour des statistiques avancées ;
+\item généralisation multi-villes et amélioration de la gestion des variantes/directions.
+\end{itemize}
+
+En conclusion, ce projet constitue une base fonctionnelle et techniquement solide, démontrant la faisabilité d’une plateforme complète de visualisation et d’analyse du transport urbain.
+
+\end{document}
+```
