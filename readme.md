@@ -28,9 +28,3 @@
 [INFOCLIMAT API]: https://www.infoclimat.fr/opendata/
 
 > PRIM - Traffic Info Messages (v2) seems to be still in development, we only have elevator incidents for metro and RER
-
-## Current problems - to adress to M. Alaya
-
-* No entries for december
-* Unsure of how to handle windchill
-* Handling bimodality : `TEMP`, `DEW_POINT_TEMP`
